@@ -7,10 +7,8 @@ import { validateCreateProduct, validateUpdateProduct, validateProductId } from 
 
 const router = Router();
   
-// Ruta de lectura: Cualquier usuario logueado puede ver el catálogo
 router.get('/', validateJWT, getProducts);
 
-// Rutas de administración: Protegidas con isAdmin y Validadores
 router.post('/', [validateJWT, isAdmin, validateCreateProduct], createProduct);
 router.put('/:id', [validateJWT, isAdmin, validateUpdateProduct], updateProduct);
 router.delete('/:id', [validateJWT, isAdmin, validateProductId], deleteProduct);

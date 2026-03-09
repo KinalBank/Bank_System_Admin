@@ -44,7 +44,6 @@ export const getUserById = async (req, res) => {
     const loggedUserId = req.user._id;
     const loggedUserRole = req.user.UserRol;
 
-    // REGLA: El USER solo puede ver su propio perfil. El ADMIN puede ver el de cualquiera.
     if (loggedUserRole === 'USER' && loggedUserId.toString() !== id) {
         return res.status(403).json({ success: false, message: 'Acceso denegado: Solo puedes ver tu propio perfil.' });
     }
@@ -73,7 +72,6 @@ export const createUser = async (req, res) => {
     const user = new User(userData);
     await user.save();
 
-    // 2. Magia: Si es un cliente normal (USER), le generamos su cuenta bancaria automáticamente
     let newAccount = null;
     if (user.UserRol === 'USER' || !user.UserRol) {
         // Genera un número de 10 dígitos aleatorio
@@ -90,7 +88,6 @@ export const createUser = async (req, res) => {
 
       const token = await generateJWT(user._id, user.UserEmail, user.UserRol);
         
-        // Envolvemos esto en un try-catch por si falla el correo, no rompa la creación de la cuenta
         try {
             await sendTokenEmail(user.UserEmail, token);
         } catch (emailError) {
@@ -102,7 +99,7 @@ export const createUser = async (req, res) => {
       success: true,
       message: 'Usuario creado exitosamente',
       data: user,
-      cuentaAsignada: newAccount // Devolvemos la cuenta generada para que el Admin la vea
+      cuentaAsignada: newAccount 
     });
   } catch (error) {
     res.status(400).json({
@@ -120,7 +117,6 @@ export const updateUser = async (req, res) => {
         const loggedUserRole = req.user.UserRol;
         const data = req.body;
 
-        // REGLA: El USER solo puede editar su propio perfil.
         if (loggedUserRole === 'USER' && loggedUserId.toString() !== id) {
             return res.status(403).json({ success: false, message: 'No tienes permiso para editar el perfil de otro usuario' });
         }
@@ -128,15 +124,12 @@ export const updateUser = async (req, res) => {
         const targetUser = await User.findById(id);
         if (!targetUser) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
 
-        // REGLA: Un Admin NO puede editar a otro Admin (solo a sí mismo)
         if (targetUser.UserRol === 'ADMIN' && loggedUserId.toString() !== id) {
             return res.status(403).json({ success: false, message: 'No puedes editar a otro usuario Administrador' });
         }
 
-        // REGLA: Prohibido cambiar DPI o Password en esta ruta
         delete data.UserDPI;
         delete data.UserPassword;
-        // REGLA EXTRA: Un usuario no puede cambiarse a sí mismo el rol para volverse ADMIN mágicamente
         delete data.UserRol; 
 
         const userUpdated = await User.findByIdAndUpdate(id, data, { new: true });
@@ -163,7 +156,6 @@ export const changeUserStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
     }
 
-    // REGLA: Un Admin NO puede desactivar a otro Admin
     if (user.UserRol === 'ADMIN' && loggedUserId.toString() !== id) {
         return res.status(403).json({ success: false, message: 'Operación denegada: No puedes desactivar a otro Administrador' });
     }
@@ -186,7 +178,6 @@ export const createDefaultAdmin = async () => {
         const adminExists = await User.findOne({ UserEmail: 'admin@kinal.edu.gt' });
         if (adminExists) return;
 
-        // AQUÍ ESTÁ EL TRUCO: No uses bcrypt.hash aquí.
         const admin = new User({
             UserName: 'ADMINB',
             UserSurname: 'SYSTEM',

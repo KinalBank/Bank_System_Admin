@@ -130,7 +130,6 @@ export const validateUpdateUserRequest = [
     checkValidators,
 ];
 
-// Validación para activar/desactivar usuario
 export const validateUserStatusChange = [
     param('id')
         .isMongoId()

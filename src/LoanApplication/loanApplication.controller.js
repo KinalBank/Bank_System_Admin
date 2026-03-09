@@ -43,12 +43,12 @@ export const approveLoanApplication = async (req, res) => {
         await account.save();
 
         const newTransaction = new Transaction({
-            type: 'DEPOSIT', // Lo tratamos como un depósito del banco hacia el cliente
+            type: 'DEPOSIT', 
             amount: application.amount,
             amountInGTQ: application.amount,
             currency: 'GTQ',
-            originAccount: null, // No viene de un cliente, viene del banco
-            destinationAccount: account._id, // Entra a la cuenta del usuario
+            originAccount: null, 
+            destinationAccount: account._id, 
             loan: loan._id,
             description: 'Desembolso de Préstamo Aprobado'
         });

@@ -1,7 +1,6 @@
 import { body, param } from 'express-validator';
 import { checkValidators } from './check-validators.js';
 
-//Parte Roberto
 export const validateCreateTransaction = [
     body('amount')
         .notEmpty().withMessage('El monto es requerido')
@@ -26,7 +25,7 @@ export const validateCreateTransaction = [
         .optional()
         .isFloat({ min: 0.0001 })
         .withMessage('Tipo de cambio inválido'),
-    //Parte Kevin
+
     body('AccountOriginId')
         .notEmpty().withMessage('El ID de cuenta de origen es requerido')
         .isMongoId().withMessage('Debe ser un ID válido de MongoDB'),

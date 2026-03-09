@@ -7,7 +7,7 @@ export const createAccount = async (req, res) => {
     try {
         const data = req.body;
 
-        // --- LÓGICA DE GENERACIÓN ALEATORIA (Tarea 47) ---
+        
         let isUnique = false;
         let generatedNumber = '';
 
@@ -129,7 +129,6 @@ export const getAccountsByMovements = async (req, res) => {
                 $sort: { totalMovements: sort === 'asc' ? 1 : -1 }
             },
             {
-                // Ocultamos el arreglo gigante de transacciones para no saturar la respuesta
                 $project: {
                     movements: 0
                 }
@@ -158,7 +157,6 @@ export const getAccountDetailsAndTop5 = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Cuenta no encontrada' });
         }
 
-        // Buscamos solo los últimos 5 movimientos ordenados por fecha de creación
         const lastMovements = await Transaction.find({
             $or: [{ originAccount: id }, { destinationAccount: id }]
         })

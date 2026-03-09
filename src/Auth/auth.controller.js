@@ -9,7 +9,6 @@ export const login = async (req, res) => {
         const { UserEmail, UserPassword } = req.body;
         const user = await User.findOne({ UserEmail });
 
-        // 1. Verificar existencia y contraseña encriptada   
         if (!user || !(await user.comparePassword(UserPassword))) {
             return res.status(401).send({ message: 'Credenciales inválidas' });
         }

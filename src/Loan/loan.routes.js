@@ -2,7 +2,6 @@
 
 import { Router } from 'express';
 
-// IMPORTACIÓN CORREGIDA
 import { validateJWT, hasRole } from '../../middlewares/validate-jwt.js';
 
 import {

@@ -8,7 +8,6 @@ import {
     revertDeposit
 } from '../Transaction/transaction.controller.js';
 
-// IMPORTACIONES DE SEGURIDAD CORREGIDAS
 import { validateJWT, hasRole } from '../../middlewares/validate-jwt.js';
 
 import {
@@ -18,7 +17,6 @@ import {
 
 const router = Router();
 
-// Usamos tu función unificada createTransaction que maneja depósitos y transferencias
 router.post('/',
     validateJWT,
     validateCreateTransaction,

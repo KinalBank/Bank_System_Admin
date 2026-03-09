@@ -13,7 +13,6 @@ import {
 } from '../../middlewares/card.validator.js';
 
 import { uploadCardImage } from '../../middlewares/file-uploader.js'; 
-// Importamos los protectores
 import { validateJWT, isAdmin } from "../../middlewares/validate-jwt.js";
 
 const router = Router();
@@ -25,7 +24,7 @@ router.get('/',
     getCards
 );
 
-// 2. Crear tarjeta (Cualquiera logueado, pero el controlador valida si es su cuenta o si es Admin)
+// 2. Crear tarjeta (Cualquiera logueado)
 router.post(
     '/',
     validateJWT,

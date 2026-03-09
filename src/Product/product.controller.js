@@ -7,9 +7,9 @@ export const getProducts = async (req, res) => {
     try {
         const { page = 1, limit = 10, type } = req.query;
         
-        // Solo mostramos los que están activos
+        
         const filter = { isActive: true };
-        if (type) filter.type = type.toUpperCase(); // Por si quieren filtrar solo SERVICIOS o PRODUCTOS
+        if (type) filter.type = type.toUpperCase(); 
 
         const products = await Product.find(filter)
             .limit(parseInt(limit))
@@ -63,7 +63,7 @@ export const updateProduct = async (req, res) => {
     }
 };
 
-// 4. Desactivar producto (SOLO ADMIN - Soft Delete)
+// 4. Desactivar producto (SOLO ADMIN)
 export const deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
