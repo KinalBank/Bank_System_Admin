@@ -17,8 +17,6 @@ const BASE_URL = '/bankSystem/v1';
 import userRoutes from '../src/User/user.routes.js';
 import accountRoutes from '../src/Account/account.routes.js';
 import transactionRoutes from '../src/Transaction/transaction.routes.js';
-import debtRoutes from '../src/Debt/debt.routes.js';
-import paymentRoutes from '../src/Payment/payment.routes.js';
 import cardRoutes from '../src/Card/card.routes.js';
 import authRoutes from '../src/Auth/auth.routes.js';
 import loanApplicationRoutes from '../src/LoanApplication/loanApplication.routes.js';
@@ -31,8 +29,7 @@ import extraFinancingRoutes from '../src/ExtraFinancing/extraFinancing.routes.js
 import extraFinancingDetailRoutes from '../src/ExtraFinancingDetail/extraFinancingDetail.routes.js';
 import extraFinancingPaymentRoutes from '../src/ExtraFinancingPayment/extraFinancingPayment.routes.js';
 import loanDetailRoutes from '../src/LoanDetail/loanDetail.routes.js';
-
-
+import productRoutes from '../src/Product/product.routes.js';
 
 
 const middleware = (app) => {
@@ -54,8 +51,6 @@ const routes = (app) => {
     app.use(`${BASE_URL}/users`, userRoutes);
     app.use(`${BASE_URL}/accounts`, accountRoutes);
     app.use(`${BASE_URL}/transactions`, transactionRoutes);
-    app.use(`${BASE_URL}/debts`, debtRoutes);
-    app.use(`${BASE_URL}/payments`, paymentRoutes);
     app.use(`${BASE_URL}/cards`, cardRoutes);
     app.use(`${BASE_URL}/auths`, authRoutes);
     app.use(`${BASE_URL}/loanApplications`, loanApplicationRoutes);
@@ -68,6 +63,7 @@ const routes = (app) => {
     app.use(`${BASE_URL}/extraFinancingDetails`, extraFinancingDetailRoutes);
     app.use(`${BASE_URL}/extraFinancingPayments`, extraFinancingPaymentRoutes);
     app.use(`${BASE_URL}/loanDetails`, loanDetailRoutes);
+    app.use(`${BASE_URL}/products`, productRoutes);
 }
 
 
@@ -75,7 +71,7 @@ const routes = (app) => {
 
 const initServer = async () => {
     const app = express();
-    const PORT = process.env.PORT || 3001;
+    const PORT = process.env.PORT || 3000;
 
     try {
         // 1. Conectar a DB (Usa await para esperar la conexión)

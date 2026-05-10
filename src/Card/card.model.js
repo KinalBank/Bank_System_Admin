@@ -8,7 +8,6 @@ const cardSchema = new mongoose.Schema({
         required: [true, 'El número de tarjeta es obligatorio'],
         unique: true,
         trim: true,
-        // Validación simple de 16 dígitos
         match: [/^\d{16}$/, 'El número de tarjeta debe tener 16 dígitos']
     },
     holderName: {
@@ -55,6 +54,11 @@ const cardSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+    
+    isApproved: {
+        type: Boolean,
+        default: false 
     },
     account: {
         type: mongoose.Schema.Types.ObjectId,

@@ -41,7 +41,7 @@ export const deleteFileOnError = async (err, req, res, next) => {
         console.error(
             `Error al eliminar archivo de Cloudinary (error handler): ${unlinkErr.message}`
         );
-        // no interrumpir el flujo de error original
+        
     }
     return next(err);
 };

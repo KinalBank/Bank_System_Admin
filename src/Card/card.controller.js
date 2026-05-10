@@ -1,6 +1,5 @@
 import Card from './card.model.js';
 import Account from '../Account/account.model.js';
-import Payment from '../Payment/payment.model.js';
 import { cloudinary } from '../../middlewares/file-uploader.js';
 
 // Obtener todas las tarjetas (con datos de Cuenta y Usuario)
@@ -46,34 +45,46 @@ export const getCards = async (req, res) => {
 // Crear nueva tarjeta vinculada a una cuenta
 export const createCard = async (req, res) => {
     try {
+
         const data = req.body;
 
-        // 1. Validar que la cuenta exista
-        const accountExist = await Account.findById(data.account);
-        if (!accountExist) {
-            // Si se subió imagen pero la cuenta falla, la borramos
+        const account = await Account.findById(data.account);
+
+        if (!account) {
             if (req.file && req.file.filename) {
                 await cloudinary.uploader.destroy(req.file.filename);
             }
-            return res.status(404).json({ 
-                success: false, 
-                message: 'La cuenta bancaria especificada no existe' 
+            return res.status(404).json({
+                success: false,
+                message: 'La cuenta bancaria especificada no existe'
             });
         }
-        
-        // -----------------------------------------------------
-        // 2. Lógica de Imagen Flexible (Archivo vs Link)
-        // -----------------------------------------------------
-        if (req.file) {
-            // OPCIÓN A: Subieron un archivo real -> Usamos la URL de Cloudinary
-            data.image = req.file.path; 
-        } else if (data.image) {
-            // OPCIÓN B: Mandaron un link escrito (texto) -> Usamos ese link
-            // Nota: data.image ya viene del req.body si lo mandaste como texto
-            data.image = data.image; 
+
+        if (
+            account.user.toString() !== req.user._id.toString() &&
+            req.user.UserRol !== 'ADMIN'
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: 'No autorizado para crear tarjeta en esta cuenta'
+            });
         }
-        // OPCIÓN C: No mandaron nada -> El modelo pone 'cards/default_card' automáticamente
-        // -----------------------------------------------------
+
+        // Restricción bancaria
+        if (account.accountType === 'AHORRO' && data.type === 'CREDIT') {
+            return res.status(400).json({
+                success: false,
+                message: 'Las cuentas de AHORRO no pueden tener tarjetas de crédito asociadas.'
+            });
+        }
+
+        // Aprobación automática
+        data.isApproved = data.type === 'DEBIT';
+
+        // Manejo de imagen
+        if (req.file) {
+            data.image = req.file.path;
+        }
 
         // Pega esto justo antes de: const card = new Card(data);
         const randomDigits = (n) => Math.floor(Math.random() * Math.pow(10, n)).toString().padStart(n, '0');
@@ -93,20 +104,22 @@ export const createCard = async (req, res) => {
 
 
 
-        res.status(201).json({ 
-            success: true, 
-            message: 'Tarjeta creada exitosamente', 
-            data: card 
+        res.status(201).json({
+            success: true,
+            message: 'Tarjeta creada exitosamente',
+            data: card
         });
+
     } catch (error) {
-        // Limpieza si falla algo
+
         if (req.file && req.file.filename) {
             await cloudinary.uploader.destroy(req.file.filename);
         }
-        res.status(400).json({ 
-            success: false, 
-            message: 'Error al crear la tarjeta', 
-            error: error.message 
+
+        res.status(400).json({
+            success: false,
+            message: 'Error al crear la tarjeta',
+            error: error.message
         });
     }
 };
@@ -116,6 +129,8 @@ export const updateCard = async (req, res) => {
     try {
         const { id } = req.params;
         const data = req.body;
+        const userRole = req.user.UserRol;
+
 
         const currentCard = await Card.findById(id);
         if (!currentCard) {
@@ -125,15 +140,12 @@ export const updateCard = async (req, res) => {
         // Si viene una nueva imagen, borramos la anterior de Cloudinary
         if (req.file) {
             if (currentCard.image && !currentCard.image.includes('default_card')) {
-                // Extraemos el public_id de la URL antigua para borrarla
-                // Nota: Esto asume que guardaste la URL completa. 
-                // Si guardaste solo el filename, usa currentCard.image directamente.
+
                 const nameArr = currentCard.image.split('/');
                 const name = nameArr[nameArr.length - 1];
                 const [publicId] = name.split('.');
                 
-                // Intentamos borrar usando el folder configurado
-                // Ajusta 'bank_system/cards/' según tu carpeta en Cloudinary
+
                 await cloudinary.uploader.destroy(`bank_system/cards/${publicId}`);
             }
             data.image = req.file.path;
@@ -155,7 +167,6 @@ export const changeCardStatus = async (req, res) => {
         const card = await Card.findById(id);
         if (!card) return res.status(404).json({ success: false, message: 'Tarjeta no encontrada' });
 
-        // El toggle mágico: invierte el estado actual
         card.isActive = !card.isActive;
         await card.save();
 
@@ -169,58 +180,20 @@ export const changeCardStatus = async (req, res) => {
     }
 };
 
-export const payCreditCard = async (req, res) => {
+
+export const approveCard = async (req, res) => {
     try {
-        const { id } = req.params; 
-        const { amount, accountId } = req.body; 
-
+        const { id } = req.params;
         const card = await Card.findById(id);
+        
         if (!card) return res.status(404).json({ success: false, message: 'Tarjeta no encontrada' });
+        if (card.isApproved) return res.status(400).json({ success: false, message: 'Esta tarjeta ya estaba aprobada' });
 
-        const accountOrigin = await Account.findById(accountId);
-        if (!accountOrigin) return res.status(404).json({ success: false, message: 'Cuenta bancaria de origen no encontrada' });
-
-        // Validaciones del negocio bancario
-        if (card.type !== 'CREDIT') {
-            return res.status(400).json({ success: false, message: 'Solo las tarjetas de crédito pueden recibir pagos de saldo' });
-        }
-
-        if (card.consumedAmount === 0) {
-            return res.status(400).json({ success: false, message: 'Esta tarjeta no tiene saldo pendiente por pagar' });
-        }
-
-        if (accountOrigin.balance < amount) {
-            return res.status(400).json({ success: false, message: 'Fondos insuficientes en la cuenta para realizar este pago' });
-        }
-
-        if (amount > card.consumedAmount) {
-            return res.status(400).json({ success: false, message: `El monto supera el saldo consumido (Deuda actual: ${card.consumedAmount})` });
-        }
-
-        // Descontar la plata de la cuenta y bajarle a la deuda de la tarjeta
-        accountOrigin.balance -= amount; 
-        card.consumedAmount -= amount;   
-
-        await accountOrigin.save();
+        card.isApproved = true;
         await card.save();
 
-        // Generar el comprobante/historial en la colección Payment
-        const paymentRecord = new Payment({
-            amount: amount,
-            description: `Pago a tarjeta de crédito terminación ${card.cardNumber.slice(-4)}`,
-            account: accountOrigin._id
-        });
-        await paymentRecord.save();
-
-        res.status(200).json({
-            success: true,
-            message: 'Pago de tarjeta realizado exitosamente',
-            data: {
-                tarjetaActualizada: card,
-                nuevoSaldoCuenta: accountOrigin.balance
-            }
-        });
+        res.status(200).json({ success: true, message: 'Tarjeta de crédito aprobada exitosamente por el banco.', data: card });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error al procesar el pago', error: error.message });
+        res.status(500).json({ success: false, message: 'Error al aprobar tarjeta', error: error.message });
     }
 };

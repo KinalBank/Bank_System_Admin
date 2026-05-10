@@ -10,7 +10,7 @@ export const sendTokenEmail = async (email, token) => {
     });
 
     const mailOptions = {
-        from: '"Restaurante App" <no-reply@tu-restaurante.com>',
+        from: '"Banco Kinal Admin" <no-reply@tu-restaurante.com>',
         to: email,
         subject: 'Tu Token de Acceso',
         html: `

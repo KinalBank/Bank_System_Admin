@@ -1,6 +1,7 @@
 'use strict';
 
 import mongoose from 'mongoose';
+import { createDefaultAdmin } from '../src/User/user.controller.js';
 
 export const dbConnection = async () => {
     try {
@@ -35,6 +36,9 @@ export const dbConnection = async () => {
             serverSelectionTimeoutMS: 5000,
             maxPoolSize: 10,
         });
+
+        await createDefaultAdmin();
+
     } catch (error) {
         console.error(`Error al conectar con la base de datos: ${error}`);
         process.exit(1);

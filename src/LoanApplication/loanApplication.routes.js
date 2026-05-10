@@ -6,15 +6,10 @@ import { validateJWT } from "../../middlewares/validate-jwt.js";
 import { hasRole } from "../../middlewares/role-validator.js";
 
 import {
-    validateCreateLoanApplication,
-    validateUpdateLoanApplication,
     validateLoanApplicationId
 } from "../../middlewares/loanApplication.validator.js";
 
 import {
-    createLoanApplication,
-    updateLoanApplication,
-    cancelLoanApplication,
     approveLoanApplication,
     rejectLoanApplication,
     getLoanApplications

@@ -5,10 +5,17 @@ import { uploadCardImage } from '../../middlewares/file-uploader.js'; // Asegúr
 
 const router = Router();
 
-router.get('/', getCards);
+// 1. Ver todas las tarjetas (Solo ADMIN puede ver el catálogo completo)
+router.get('/', 
+    validateJWT, 
+    isAdmin, 
+    getCards
+);
 
+// 2. Crear tarjeta (Cualquiera logueado)
 router.post(
     '/',
+    validateJWT,
     uploadCardImage.single('image'), 
     validateCreateCard,
     createCard

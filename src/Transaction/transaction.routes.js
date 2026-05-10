@@ -1,31 +1,42 @@
 'use strict';
 
 import { Router } from 'express';
-import { validateJWT } from '../../middlewares/validate-jwt.js';
-
 import {
+    getTransactions,
     createTransaction,
-    getTransactions
-} from './transaction.controller.js';
+    getAccountHistory,
+    revertDeposit
+} from '../Transaction/transaction.controller.js';
+
+import { validateJWT, hasRole } from '../../middlewares/validate-jwt.js';
 
 import {
-    validateCreateTransaction
+    validateCreateTransaction,
+    validateHistoryId
 } from '../../middlewares/transaction.validator.js';
 
 const router = Router();
 
-// Crear transacción
-router.post(
-    '/',
+router.post('/',
     validateJWT,
     validateCreateTransaction,
     createTransaction
 );
 
-// Listar transacciones del usuario
-router.get(
-    '/',
+router.put('/revert/:id',
     validateJWT,
+    hasRole('ADMIN'),
+    revertDeposit
+);
+
+router.get('/account/:id/history', 
+    validateJWT,
+    validateHistoryId, 
+    getAccountHistory
+);
+
+router.get('/', 
+    validateJWT, 
     getTransactions
 );
 

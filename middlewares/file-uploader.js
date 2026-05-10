@@ -5,7 +5,6 @@ import pkg from 'multer-storage-cloudinary';
 import { v4 as uuidv4 } from 'uuid';
 import { extname } from 'path';
 
-// Solución para Node v24: Detecta el constructor de forma automática
 const CloudinaryStorage = pkg.CloudinaryStorage || (pkg.default && pkg.default.CloudinaryStorage) || pkg;
  
 dotenv.config();
@@ -27,7 +26,6 @@ const MIMETYPES = [
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
  
 const createCloudinaryUploader = (folder) => {
-    // Aquí usamos la constante que detectamos arriba
     const storage = new CloudinaryStorage({
         cloudinary: cloudinary,
         params: (req, file) => {

@@ -11,12 +11,6 @@ export const validateCreateLoanApplication = [
         .notEmpty().withMessage('El plazo en meses es requerido')
         .isInt({ min: 1, max: 120 })
         .withMessage('El plazo debe estar entre 1 y 120 meses'),
-
-    body('purpose')
-        .notEmpty().withMessage('El propósito del préstamo es requerido')
-        .isLength({ max: 255 })
-        .withMessage('El propósito no puede exceder 255 caracteres'),
-
     checkValidators
 ];
 
@@ -34,12 +28,6 @@ export const validateUpdateLoanApplication = [
         .optional()
         .isInt({ min: 1, max: 120 })
         .withMessage('El plazo debe estar entre 1 y 120 meses'),
-
-    body('purpose')
-        .optional()
-        .isLength({ max: 255 })
-        .withMessage('El propósito no puede exceder 255 caracteres'),
-
     checkValidators
 ];
 

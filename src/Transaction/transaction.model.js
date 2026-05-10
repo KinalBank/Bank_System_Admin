@@ -39,7 +39,6 @@ const transactionSchema = new Schema(
         originAccount: {
             type: Schema.Types.ObjectId,
             ref: 'Account',
-            required: true
         },
         destinationAccount: {
             type: Schema.Types.ObjectId,
@@ -59,9 +58,9 @@ const transactionSchema = new Schema(
         },
         status: {
             type: String,
-            enum: ['COMPLETED', 'FAILED'],
+            enum: ['COMPLETED', 'FAILED', 'REVERTED'],
             default: 'COMPLETED'
-        }
+        }      
     },
     {
         timestamps: true

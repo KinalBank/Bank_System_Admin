@@ -1,11 +1,30 @@
+'use strict';
 
-import { Router } from "express";
-import { validateCreateAccount } from "../../middlewares/account.validator.js"; 
-import { createAccount, getAccounts, changeAccountStatus } from "./account.controller.js";
+import { Router } from 'express';
+import { 
+    createAccount, 
+    getAccounts, 
+    changeAccountStatus, 
+    getAccountRanking, 
+    getAccountDetails 
+} from './account.controller.js';
+import { validateJWT, isAdmin } from '../../middlewares/validate-jwt.js';
+
 const router = Router();
 
-router.post('/', validateCreateAccount, createAccount);
-router.get('/', getAccounts);
-router.put('/:id/status', changeAccountStatus);
+// GET - Obtener todas las cuentas (Se ve pro con validateJWT)
+router.get('/', [validateJWT], getAccounts);
+
+// POST - Crear cuenta (Aquí es donde te daba el 401)
+router.post('/', [validateJWT], createAccount);
+
+// PUT - Cambiar estado
+router.put('/:id/status', [validateJWT, isAdmin], changeAccountStatus);
+
+// GET - Ranking de movimientos
+router.get('/movements/ranking', [validateJWT], getAccountRanking);
+
+// GET - Detalles de cuenta
+router.get('/:id/details', [validateJWT], getAccountDetails);
 
 export default router;

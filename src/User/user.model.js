@@ -29,6 +29,24 @@ const userSchema = new mongoose.Schema({
         lowercase: true,
         unique: true
     },
+    UserAddress: {
+        type: String,
+        required: [true, 'La dirección es requerida']
+    },
+    UserPhone: {
+        type: String,
+        required: [true, 'El celular es requerido'],
+        maxLength: [15, 'El celular no puede tener más de 15 caracteres']
+    },
+    UserJob: {
+        type: String,
+        required: [true, 'El nombre de trabajo es requerido']
+    },
+    UserIncome: {
+        type: Number,
+        required: [true, 'Los ingresos mensuales son requeridos']
+        // Nota: La validación de los Q100 la haremos en el validador para que Postman la atrape antes.
+    },
     UserPassword: {
         type: String,
         required: [true, 'La contraseña es requerida'],

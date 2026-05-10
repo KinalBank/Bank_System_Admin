@@ -1,3 +1,4 @@
+'use strict';
 
 import { Schema, model } from "mongoose";
 
@@ -34,13 +35,15 @@ const accountSchema = Schema({
     status: {
         type: Boolean,
         default: true
+    },
+    bank: {
+        type: String,
+        enum: ['Banco Kinal', 'Banco Industrial', 'Banrural', 'BAC', 'G&T Continental', 'Promerica'],
+        default: 'Banco Kinal'
     }
 }, {
     timestamps: true,
     versionKey: false
 });
-
-// Índice para optimizar búsquedas por número de cuenta
-//accountSchema.index({ accountNumber: 1 });
 
 export default model('Account', accountSchema);

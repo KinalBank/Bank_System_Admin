@@ -18,6 +18,10 @@ export const validateCreateAccount = [
     body('user')
         .notEmpty().withMessage('El ID del usuario es requerido')
         .isMongoId().withMessage('ID de usuario no válido'),
-    
+
+    body('bank')
+        .optional() 
+        .isIn(['Banco Kinal', 'Banco Industrial', 'Banrural', 'BAC', 'G&T Continental', 'Promerica'])
+        .withMessage('El banco ingresado no está en la red autorizada'),
     checkValidators
 ];
