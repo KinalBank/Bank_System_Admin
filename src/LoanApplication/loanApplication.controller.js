@@ -142,6 +142,29 @@ export const approveLoanApplication = async (req, res) => {
             loan
         });
 
+        // Lógica para definir las cuotas 
+        const generateAmortizationTable = async (loanId, totalAmount, months, interestRate) => {
+            const monthlyInterest = (interestRate / 100) / 12;
+            // Fórmula de cuota nivelada 
+            const monthlyPayment = totalAmount * (monthlyInterest / (1 - Math.pow(1 + monthlyInterest, -months)));
+
+            for (let i = 1; i <= months; i++) {
+                const dueDate = new Date();
+                dueDate.setMonth(dueDate.getMonth() + i);
+
+                const detail = new LoanDetail({
+                    loan: loanId,
+                    installmentNumber: i,
+                    amount: monthlyPayment.toFixed(2),
+                    principal: (monthlyPayment - (totalAmount * monthlyInterest)).toFixed(2), // Ejemplo simplificado
+                    interest: (totalAmount * monthlyInterest).toFixed(2),
+                    expectedDate: dueDate,
+                    status: 'PENDING'
+                });
+                await detail.save();
+            }
+        };
+
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
