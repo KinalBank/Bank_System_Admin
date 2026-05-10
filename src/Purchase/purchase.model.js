@@ -21,10 +21,9 @@ const purchaseSchema = new Schema({
     cardId: { 
         type: Schema.Types.ObjectId,
         required: true
-        // Referencia dinámica: Puede ser CreditCard o Account (si la tarjeta de débito está ligada a la cuenta)
     },
     merchant: {
-        type: String, // Nombre del comercio
+        type: String, 
         default: 'Comercio Local'
     },
     date: {
