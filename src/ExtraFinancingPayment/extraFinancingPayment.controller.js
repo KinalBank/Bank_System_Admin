@@ -1,10 +1,9 @@
 'use strict';
 
-import ExtraFinancing from './extraFinancing.model.js';
-import ExtraFinancingDetail from './extraFinancingDetail.model.js';
+import ExtraFinancing from '../ExtraFinancing/extraFinancing.model.js';
+import ExtraFinancingDetail from '../ExtraFinancingDetail/extraFinancingDetail.model.js';
 import ExtraFinancingPayment from './extraFinancingPayment.model.js';
 import Account from '../Account/account.model.js';
-import Transaction from '../Transaction/transaction.model.js';
 
 export const payExtraFinancingInstallment = async (req, res) => {
     try {
@@ -30,8 +29,7 @@ export const payExtraFinancingInstallment = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Saldo insuficiente en la cuenta' });
         }
 
-        account.balance -= installment.amount;
-        await account.save();
+        await Account.findByIdAndUpdate(accountId, { $inc: { balance: -installment.amount } });
 
         installment.status = 'PAID';
         installment.paymentDate = new Date();
@@ -51,15 +49,6 @@ export const payExtraFinancingInstallment = async (req, res) => {
             amount: installment.amount
         });
         await payment.save();
-
-        const transaction = new Transaction({
-            type: 'EXTRA_FINANCING_PAYMENT',
-            amount: installment.amount,
-            originAccount: account._id,
-            description: `Pago cuota #${installment.installmentNumber} - Extrafinanciamiento`,
-            status: 'COMPLETED'
-        });
-        await transaction.save();
 
         res.status(200).json({
             success: true,

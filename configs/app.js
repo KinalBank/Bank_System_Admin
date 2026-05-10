@@ -27,6 +27,11 @@ import exchangeRoutes from '../src/Exchange/exchange.routes.js';
 import creditCardRoutes from '../src/CreditCard/creditCard.routes.js';
 import purchaseRoutes from '../src/Purchase/purchase.routes.js';
 import creditCardPaymentRoutes from '../src/CreditCardPayment/creditCardPayment.routes.js';
+import extraFinancingRoutes from '../src/ExtraFinancing/extraFinancing.routes.js';
+import extraFinancingDetailRoutes from '../src/ExtraFinancingDetail/extraFinancingDetail.routes.js';
+import extraFinancingPaymentRoutes from '../src/ExtraFinancingPayment/extraFinancingPayment.routes.js';
+import loanDetailRoutes from '../src/LoanDetail/loanDetail.routes.js';
+
 
 
 
@@ -59,7 +64,10 @@ const routes = (app) => {
     app.use(`${BASE_URL}/creditCards`, creditCardRoutes);
     app.use(`${BASE_URL}/purchases`, purchaseRoutes);
     app.use(`${BASE_URL}/creditCardPayments`, creditCardPaymentRoutes);
-
+    app.use(`${BASE_URL}/extraFinancings`, extraFinancingRoutes);
+    app.use(`${BASE_URL}/extraFinancingDetails`, extraFinancingDetailRoutes);
+    app.use(`${BASE_URL}/extraFinancingPayments`, extraFinancingPaymentRoutes);
+    app.use(`${BASE_URL}/loanDetails`, loanDetailRoutes);
 }
 
 

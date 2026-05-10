@@ -2,14 +2,15 @@
 
 import { Router } from 'express';
 import { payExtraFinancingInstallment } from './extraFinancingPayment.controller.js';
-import { validateJWT, isAdmin } from '../../middlewares/validate-jwt.js';
-import { validateExtraFinancingPayment } from './extraFinancingPayment.validator.js';
+import { validateJWT } from '../../middlewares/validate-jwt.js';
+import { hasRole } from '../../middlewares/role-validator.js';
+import { validateExtraFinancingPayment } from '../../middlewares/extraFinancingPayment.validator.js';
 
 const router = Router();
 
 router.post('/pay', [
     validateJWT,
-    isAdmin,
+    hasRole('ADMIN_ROLE'),
     validateExtraFinancingPayment
 ], payExtraFinancingInstallment);
 

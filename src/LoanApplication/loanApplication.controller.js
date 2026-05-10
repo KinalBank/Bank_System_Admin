@@ -1,220 +1,184 @@
 'use strict';
 
-import LoanApplication from "./loanApplication.model.js";
-import Loan from "../Loan/loan.model.js";
-import Account from "../Account/account.model.js";
+import LoanApplication from './loanApplication.model.js';
+import Loan from '../Loan/loan.model.js';
+import LoanDetail from '../LoanDetail/loanDetail.model.js';
+import Account from '../Account/account.model.js';
 
+const generateLoanDetails = async (loanId, totalAmount, months, annualInterestRate) => {
+    const monthlyRate = (annualInterestRate / 100) / 12;
+    const monthlyPayment = monthlyRate === 0
+        ? totalAmount / months
+        : totalAmount * (monthlyRate / (1 - Math.pow(1 + monthlyRate, -months)));
 
-// Crear solicitud
+    let balance = totalAmount;
+    const details = [];
+
+    for (let i = 1; i <= months; i++) {
+        const interestPart  = parseFloat((balance * monthlyRate).toFixed(2));
+        const principalPart = parseFloat((monthlyPayment - interestPart).toFixed(2));
+        balance = parseFloat((balance - principalPart).toFixed(2));
+
+        const expectedDate = new Date();
+        expectedDate.setMonth(expectedDate.getMonth() + i);
+
+        details.push({
+            loan: loanId,
+            installmentNumber: i,
+            amount: parseFloat(monthlyPayment.toFixed(2)),
+            interest: interestPart,
+            principal: principalPart,
+            expectedDate,
+            status: 'PENDING',
+        });
+    }
+
+    await LoanDetail.insertMany(details);
+};
+
+// Crear solicitud (Cliente)
 export const createLoanApplication = async (req, res) => {
     try {
-        const userId = req.user._id;
-        const data = req.body;
-
         const application = new LoanApplication({
-            ...data,
-            applicant: userId
+            ...req.body,
+            applicant: req.user.id  // ← fix: id no _id
         });
-
         await application.save();
 
-        res.status(201).json({
-            success: true,
-            message: 'Solicitud enviada correctamente',
-            application
-        });
-
+        res.status(201).json({ success: true, message: 'Solicitud enviada correctamente', application });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error al crear solicitud',
-            error: error.message
-        });
+        res.status(500).json({ success: false, message: 'Error al crear solicitud', error: error.message });
     }
 };
 
-
-// Editar solicitud (solo si está PENDING y es del usuario)
+// Editar solicitud (Cliente, solo si PENDING)
 export const updateLoanApplication = async (req, res) => {
     try {
         const { id } = req.params;
-        const data = req.body;
-
         const application = await LoanApplication.findById(id);
 
         if (!application)
             return res.status(404).json({ success: false, message: 'Solicitud no encontrada' });
-
         if (application.status !== 'PENDING')
             return res.status(400).json({ success: false, message: 'No se puede modificar esta solicitud' });
-
-        if (application.applicant.toString() !== req.user._id.toString())
+        if (application.applicant.toString() !== req.user.id.toString())
             return res.status(403).json({ success: false, message: 'No autorizado' });
 
-        Object.assign(application, data);
+        Object.assign(application, req.body);
         await application.save();
 
-        res.status(200).json({
-            success: true,
-            message: 'Solicitud actualizada',
-            application
-        });
-
+        res.status(200).json({ success: true, message: 'Solicitud actualizada', application });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-
-// Cancelar solicitud (solo si está PENDING y es del usuario)
+// Cancelar solicitud (Cliente, solo si PENDING)
 export const cancelLoanApplication = async (req, res) => {
     try {
         const { id } = req.params;
-
         const application = await LoanApplication.findById(id);
 
         if (!application)
             return res.status(404).json({ success: false, message: 'Solicitud no encontrada' });
-
         if (application.status !== 'PENDING')
             return res.status(400).json({ success: false, message: 'No se puede cancelar esta solicitud' });
-
-        if (application.applicant.toString() !== req.user._id.toString())
+        if (application.applicant.toString() !== req.user.id.toString())
             return res.status(403).json({ success: false, message: 'No autorizado' });
 
         application.status = 'CANCELLED';
         await application.save();
 
-        res.status(200).json({
-            success: true,
-            message: 'Solicitud cancelada'
-        });
-
+        res.status(200).json({ success: true, message: 'Solicitud cancelada' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-
 // Aprobar solicitud (ADMIN)
 export const approveLoanApplication = async (req, res) => {
     try {
         const { id } = req.params;
-        const adminId = req.user._id;
 
         const application = await LoanApplication.findById(id);
-
         if (!application)
             return res.status(404).json({ success: false, message: 'Solicitud no encontrada' });
 
-        if (application.status !== 'PENDING')
+        if (!['PENDING', 'UNDER_REVIEW'].includes(application.status))
             return res.status(400).json({ success: false, message: 'Solicitud ya procesada' });
 
-        const account = await Account.findById(application.account);
+        if (!application.applicant || !application.termMonths || !application.amount)
+            return res.status(400).json({ success: false, message: 'La solicitud tiene datos incompletos' });
 
+        const account = await Account.findById(application.account);
         if (!account)
             return res.status(404).json({ success: false, message: 'Cuenta asociada no encontrada' });
+
+        const interestRatePercent = application.interestRate <= 1
+            ? application.interestRate * 100
+            : application.interestRate;
 
         const loan = new Loan({
             borrower: application.applicant,
             account: application.account,
             amount: application.amount,
             termMonths: application.termMonths,
-            interestRate: application.interestRate,
+            interestRate: interestRatePercent,
             remainingBalance: application.amount,
             status: 'ACTIVE',
-            startDate: new Date()
+            startDate: new Date(),
         });
 
         await loan.save();
-
-        account.balance += application.amount;
-        await account.save();
+        await generateLoanDetails(loan._id, application.amount, application.termMonths, interestRatePercent);
+        await Account.findByIdAndUpdate(application.account, { $inc: { balance: application.amount } });
 
         application.status = 'APPROVED';
-        application.reviewedBy = adminId;
+        application.reviewedBy = req.user.id;
         application.reviewDate = new Date();
         await application.save();
 
-        res.status(200).json({
-            success: true,
-            message: 'Préstamo aprobado correctamente',
-            loan
-        });
+        const populatedLoan = await Loan.findById(loan._id)
+            .populate('borrower', 'UserName UserSurname UserEmail')
+            .populate('account', 'accountNumber balance');
 
-        // Lógica para definir las cuotas 
-        const generateAmortizationTable = async (loanId, totalAmount, months, interestRate) => {
-            const monthlyInterest = (interestRate / 100) / 12;
-            // Fórmula de cuota nivelada 
-            const monthlyPayment = totalAmount * (monthlyInterest / (1 - Math.pow(1 + monthlyInterest, -months)));
-
-            for (let i = 1; i <= months; i++) {
-                const dueDate = new Date();
-                dueDate.setMonth(dueDate.getMonth() + i);
-
-                const detail = new LoanDetail({
-                    loan: loanId,
-                    installmentNumber: i,
-                    amount: monthlyPayment.toFixed(2),
-                    principal: (monthlyPayment - (totalAmount * monthlyInterest)).toFixed(2), // Ejemplo simplificado
-                    interest: (totalAmount * monthlyInterest).toFixed(2),
-                    expectedDate: dueDate,
-                    status: 'PENDING'
-                });
-                await detail.save();
-            }
-        };
-
+        res.status(200).json({ success: true, message: 'Préstamo aprobado correctamente', loan: populatedLoan });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
-
 
 // Rechazar solicitud (ADMIN)
 export const rejectLoanApplication = async (req, res) => {
     try {
         const { id } = req.params;
-        const adminId = req.user._id;
-
         const application = await LoanApplication.findById(id);
 
         if (!application)
             return res.status(404).json({ success: false, message: 'Solicitud no encontrada' });
-
         if (application.status !== 'PENDING')
             return res.status(400).json({ success: false, message: 'Solicitud ya procesada' });
 
         application.status = 'REJECTED';
-        application.reviewedBy = adminId;
+        application.reviewedBy = req.user.id;  // ← fix: id no _id
         application.reviewDate = new Date();
         await application.save();
 
-        res.status(200).json({
-            success: true,
-            message: 'Solicitud rechazada'
-        });
-
+        res.status(200).json({ success: true, message: 'Solicitud rechazada' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
 
-
-// Listar solicitudes (ADMIN)
+// Listar todas (ADMIN)
 export const getLoanApplications = async (req, res) => {
     try {
         const applications = await LoanApplication.find()
-            .populate('applicant', 'UserName UserEmail')
+            .populate('applicant', 'UserName UserSurname UserEmail')
             .populate('account')
             .populate('reviewedBy', 'UserName');
 
-        res.status(200).json({
-            success: true,
-            total: applications.length,
-            applications
-        });
-
+        res.status(200).json({ success: true, total: applications.length, applications });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

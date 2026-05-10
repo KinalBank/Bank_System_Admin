@@ -1,7 +1,18 @@
 'use strict';
 
 import ExtraFinancing from './extraFinancing.model.js';
-import CreditCard from '../Card/creditCard.model.js';
+import ExtraFinancingDetail from '../ExtraFinancingDetail/extraFinancingDetail.model.js';
+import CreditCard from '../CreditCard/creditCard.model.js';
+
+export const getFinancingsByCard = async (req, res) => {
+    try {
+        const { creditCardId } = req.params;
+        const financings = await ExtraFinancing.find({ creditCard: creditCardId });
+        res.status(200).json({ success: true, data: financings });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error al obtener financiamientos', error: error.message });
+    }
+};
 
 export const createExtraFinancing = async (req, res) => {
     try {
@@ -12,24 +23,52 @@ export const createExtraFinancing = async (req, res) => {
         if (!card) return res.status(404).json({ success: false, message: 'Tarjeta de crédito no encontrada' });
         if (card.status !== 'ACTIVE') return res.status(400).json({ success: false, message: 'La tarjeta no está activa para este beneficio' });
 
+        // ── FIX: garantizar que interestRate sea siempre un número válido ──
+        // Si el frontend no lo envía o llega undefined/NaN, el pre('validate')
+        // del modelo calculaba NaN → Mongoose lanzaba ValidationError → 500.
+        const safeInterestRate = (interestRate !== undefined && !isNaN(Number(interestRate)))
+            ? Number(interestRate)
+            : 1.5;
+
+        const interest = totalAmount * (safeInterestRate / 100);
+        const monthlyPayment = parseFloat(((totalAmount / installments) + interest).toFixed(2));
+
         const newFinancing = new ExtraFinancing({
             description,
             creditCard,
-            user: card.user, 
+            user: card.user,
             totalAmount,
+            remainingBalance: totalAmount,   // required en el modelo
             installments,
-            interestRate
+            monthlyPayment,                  // required en el modelo
+            interestRate: safeInterestRate,
         });
 
         await newFinancing.save();
 
+        // ── Generar cuotas (ExtraFinancingDetail) automáticamente ──────────
+        const today = new Date();
+        const details = Array.from({ length: installments }, (_, i) => ({
+            extraFinancing: newFinancing._id,
+            installmentNumber: i + 1,
+            amount: monthlyPayment,
+            expectedDate: new Date(today.getFullYear(), today.getMonth() + i + 1, today.getDate()),
+            status: 'PENDING',
+        }));
+
+        await ExtraFinancingDetail.insertMany(details);
+
         res.status(201).json({
             success: true,
             message: 'Extra-financiamiento otorgado con éxito',
-            data: newFinancing
+            data: newFinancing,
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error al procesar el financiamiento', error: error.message });
+        res.status(500).json({
+            success: false,
+            message: 'Error al procesar el financiamiento',
+            error: error.message,
+        });
     }
 };
 

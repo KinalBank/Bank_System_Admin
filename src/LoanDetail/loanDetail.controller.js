@@ -1,7 +1,7 @@
 'use strict';
 
 import LoanDetail from './loanDetail.model.js';
-import Loan from './loan.model.js';
+import Loan from '../Loan/loan.model.js';
 import Account from '../Account/account.model.js';
 import Transaction from '../Transaction/transaction.model.js';
 
@@ -10,7 +10,8 @@ export const getLoanDetails = async (req, res) => {
         const { loanId } = req.params;
         const details = await LoanDetail.find({ loan: loanId }).sort({ installmentNumber: 1 });
 
-        if (!details) return res.status(404).json({ success: false, message: 'No se encontraron detalles para este préstamo' });
+        if (!details.length)
+            return res.status(404).json({ success: false, message: 'No se encontraron cuotas para este préstamo' });
 
         res.status(200).json({ success: true, data: details });
     } catch (error) {
@@ -22,55 +23,64 @@ export const payInstallment = async (req, res) => {
     try {
         const { loanId, accountId } = req.body;
 
-        // Buscar el préstamo y la cuenta
         const loan = await Loan.findById(loanId);
         const account = await Account.findById(accountId);
 
-        if (!loan || !account) return res.status(404).json({ success: false, message: 'Préstamo o Cuenta no encontrados' });
-        if (account.balance < 0) return res.status(400).json({ success: false, message: 'Saldo insuficiente' });
+        if (!loan || !account)
+            return res.status(404).json({ success: false, message: 'Préstamo o Cuenta no encontrados' });
 
-        // Buscar la cuota pendiente más antigua
-        const installment = await LoanDetail.findOne({ loan: loanId, status: 'PENDING' }).sort({ installmentNumber: 1 });
+        const installment = await LoanDetail.findOne({ loan: loanId, status: 'PENDING' })
+            .sort({ installmentNumber: 1 });
 
-        if (!installment) return res.status(400).json({ success: false, message: 'No hay cuotas pendientes para este préstamo' });
+        if (!installment)
+            return res.status(400).json({ success: false, message: 'No hay cuotas pendientes para este préstamo' });
 
-        // Validar saldo
-        if (account.balance < installment.amount) {
+        if (account.balance < installment.amount)
             return res.status(400).json({ success: false, message: 'Saldo insuficiente en la cuenta seleccionada' });
+
+        // ✅ findByIdAndUpdate en lugar de .save() — evita re-validación del schema
+        await Account.findByIdAndUpdate(accountId, { $inc: { balance: -installment.amount } });
+
+        await LoanDetail.findByIdAndUpdate(installment._id, {
+            status: 'PAID',
+            paymentDate: new Date()
+        });
+
+        // ✅ Contar cuántas PENDING quedan tras marcar esta como pagada
+        const remainingPending = await LoanDetail.countDocuments({ loan: loanId, status: 'PENDING' });
+
+        let newBalance, newStatus;
+        if (remainingPending === 0) {
+            // Última cuota — cerrar limpio sin residuo de redondeo
+            newBalance = 0;
+            newStatus = 'PAID';
+        } else {
+            newBalance = parseFloat((loan.remainingBalance - installment.principal).toFixed(2));
+            newStatus = loan.status;
         }
 
-        
-        // Descontar de la cuenta
-        account.balance -= installment.amount;
-        await account.save();
+        // ✅ findByIdAndUpdate en lugar de .save()
+        await Loan.findByIdAndUpdate(loanId, {
+            remainingBalance: newBalance,
+            status: newStatus
+        });
 
-        // Actualizar la cuota
-        installment.status = 'PAID';
-        installment.paymentDate = new Date();
-        await installment.save();
-
-        // Actualizar el saldo restante del préstamo
-        loan.remainingBalance -= installment.principal; 
-        if (loan.remainingBalance <= 0) loan.status = 'PAID';
-        await loan.save();
-
-        // Crear registro en Transacciones
-        const transaction = new Transaction({
+        await Transaction.create({
             type: 'LOAN_PAYMENT',
             amount: installment.amount,
-            amountInGTQ: installment.amount, 
-            originAccount: account._id,
-            loan: loan._id,
-            description: `Pago de cuota #${installment.installmentNumber} del préstamo ${loan._id}`,
+            amountInGTQ: installment.amount,
+            originAccount: accountId,
+            loan: loanId,
+            description: `Pago de cuota #${installment.installmentNumber} del préstamo ${loanId}`,
             status: 'COMPLETED'
         });
-        await transaction.save();
 
         res.status(200).json({
             success: true,
             message: `Cuota #${installment.installmentNumber} pagada exitosamente`,
-            nuevoSaldoCuenta: account.balance,
-            saldoRestantePrestamo: loan.remainingBalance
+            nuevoSaldoCuenta: account.balance - installment.amount,
+            saldoRestantePrestamo: newBalance,
+            loanStatus: newStatus
         });
 
     } catch (error) {

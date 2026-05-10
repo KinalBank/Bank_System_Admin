@@ -50,13 +50,12 @@ const extraFinancingSchema = new Schema({
     versionKey: false
 });
 
-extraFinancingSchema.pre('validate', function(next) {
+extraFinancingSchema.pre('validate', function() {
     if (this.isNew) {
         this.remainingBalance = this.totalAmount;
-        const interest = (this.totalAmount * (this.interestRate / 100));
-        this.monthlyPayment = (this.totalAmount / this.installments) + interest;
+        const interest = this.totalAmount * ((this.interestRate ?? 1.5) / 100);
+        this.monthlyPayment = parseFloat(((this.totalAmount / this.installments) + interest).toFixed(2));
     }
-    next();
 });
 
 export default model('ExtraFinancing', extraFinancingSchema);

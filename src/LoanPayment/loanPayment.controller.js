@@ -29,8 +29,7 @@ export const payLoanInstallment = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Saldo insuficiente en la cuenta' });
         }
 
-        account.balance -= installment.amount;
-        await account.save();
+        await Account.findByIdAndUpdate(accountId, { $inc: { balance: -installment.amount } });
 
         installment.status = 'PAID';
         installment.paymentDate = new Date();

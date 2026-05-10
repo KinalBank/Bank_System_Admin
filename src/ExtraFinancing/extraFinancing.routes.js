@@ -1,13 +1,15 @@
 'use strict';
 
 import { Router } from 'express';
-import { createExtraFinancing, getAllFinancings } from './extraFinancing.controller.js';
-import { validateJWT, isAdmin } from '../../middlewares/validate-jwt.js';
+import { createExtraFinancing, getAllFinancings, getFinancingsByCard } from './extraFinancing.controller.js';
+
+import { validateJWT } from '../../middlewares/validate-jwt.js';
+import { hasRole } from '../../middlewares/role-validator.js';
 import { validateExtraFinancing } from '../../middlewares/extraFinancing.validator.js';
 
 const router = Router();
 
-router.post('/', [validateJWT, isAdmin, validateExtraFinancing], createExtraFinancing);
-router.get('/', [validateJWT, isAdmin], getAllFinancings);
-
+router.post('/', [validateJWT, hasRole('ADMIN_ROLE'), validateExtraFinancing], createExtraFinancing);
+router.get('/', [validateJWT, hasRole('ADMIN_ROLE')], getAllFinancings);
+router.get('/card/:creditCardId', [validateJWT, hasRole('ADMIN_ROLE')], getFinancingsByCard);
 export default router;
