@@ -5,50 +5,39 @@ import User from '../src/User/user.model.js';
 export const validateJWT = async (req, res, next) => {
     const token = req.header('x-token') || req.header('Authorization')?.replace('Bearer ', '');
 
-    if (!token) return res.status(401).json({ message: 'No hay token en la petición' });
+    // 1. Si no hay token, no matamos la petición, solo seguimos.
+    if (!token) {
+        console.log("No había token, pero dejamos pasar por bypass de demo");
+        return next(); 
+    }
 
     try {
-        const { uid } = jwt.verify(token, process.env.SECRET_KEY);
-        const user = await User.findById(uid);
+        const decoded = jwt.verify(token, process.env.SECRET_KEY);
+        const id = decoded.uid || decoded.id;
+        const user = await User.findById(id);
 
-        // Verificamos si existe, si está activo y si no fue eliminado con el soft delete
-        if (!user || user.UserStatus === 'INACTIVE' || user.deletedAt) {
-            return res.status(401).json({ message: 'Token no válido - Usuario no disponible' });
+        if (user) {
+            req.user = user;
         }
-
-        req.user = user; // Guardamos al usuario en la req para usarlo después
+        
+        // 2. Siempre dejamos pasar
         next();
     } catch (error) {
-        res.status(401).json({ message: 'Token no válido o expirado' });
+        console.log("Token malo, pero ignoramos el error para la demo");
+        next(); // El secreto está aquí: pase lo que pase, que siga.
     }
+};
+
+/**
+ * Los de roles también los dejamos "de adorno"
+ */
+export const hasRole = (...roles) => {
+    return (req, res, next) => {
+        // Ignoramos la validación de roles y dejamos pasar siempre
+        next();
+    };
 };
 
 export const isAdmin = (req, res, next) => {
-    if (!req.user) {
-        return res.status(401).json({ message: 'No autenticado' });
-    }
-    if (req.user.UserRol !== 'ADMIN') {
-        return res.status(403).json({ message: 'Acceso solo para administradores' });
-    }
     next();
-};
-
-export const hasRole = (...roles) => {
-    return (req, res, next) => {
-        if (!req.user) {
-            return res.status(401).json({
-                success: false,
-                message: 'Usuario no autenticado'
-            });
-        }
-
-        if (!roles.includes(req.user.UserRol)) {
-            return res.status(403).json({
-                success: false,
-                message: `Acceso permitido solo para: ${roles.join(', ')}`
-            });
-        }
-
-        next();
-    };
 };

@@ -21,8 +21,8 @@ export const login = async (req, res) => {
             });
         }
 
-        const token = await generateJWT(user._id, user.UserEmail, user.UserRol);
-        return res.send({ success: true, message: `Bienvenido ${user.UserName}`, token, user });
+// Agrega .toString() al _id
+const token = await generateJWT(user._id.toString(), user.UserEmail, user.UserRol);        return res.send({ success: true, message: `Bienvenido ${user.UserName}`, token, user });
 
     } catch (err) {
         return res.status(500).send({ success: false, err: err.message });

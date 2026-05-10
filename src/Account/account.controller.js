@@ -1,74 +1,100 @@
+'use strict';
 
-import Account from "./account.model.js";
-import Transaction from '../Transaction/transaction.model.js';
+import Account from './account.model.js';
+import User from '../User/user.model.js';
 
-// Crear nueva cuenta
+/**
+ * CREAR UNA CUENTA (ADMIN)
+ * Nota: El bypass del middleware permite que esto pase aunque el token falle.
+ */
 export const createAccount = async (req, res) => {
     try {
         const data = req.body;
 
-        
+        // 1. Identificar al propietario: Prioridad al campo 'user' del body (tu modal)
+        // Si no viene en el body, intentamos sacarlo del req.user (si el token funcionó)
+        const userId = data.user || (req.user ? req.user._id : null);
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: 'No se pudo identificar al propietario. Asegúrate de enviar el User ID.'
+            });
+        }
+
+        // 2. Verificar que el usuario exista realmente en la DB
+        const userExists = await User.findById(userId);
+        if (!userExists) {
+            return res.status(404).json({
+                success: false,
+                message: 'El usuario propietario no existe en la base de datos.'
+            });
+        }
+
+        // 3. Generar un número de cuenta único de 10 dígitos
         let isUnique = false;
         let generatedNumber = '';
-
-        // Bucle para asegurar que el número de 10 dígitos no exista ya en la BD
         while (!isUnique) {
             // Genera un número aleatorio entre 1000000000 y 9999999999
             generatedNumber = Math.floor(1000000000 + Math.random() * 9000000000).toString();
-
-            // Busca si ya hay una cuenta con este número
             const existingAccount = await Account.findOne({ accountNumber: generatedNumber });
-            if (!existingAccount) {
-                isUnique = true; // Si no existe, rompemos el bucle
-            }
+            if (!existingAccount) isUnique = true;
         }
 
-        // Le asignamos el número generado automáticamente a la data
-        data.accountNumber = generatedNumber;
-        // --------------------------------------------------
+        // 4. Preparar la data final
+        const accountData = {
+            accountNumber: generatedNumber,
+            accountType: data.accountType || 'AHORRO',
+            balance: data.balance || 0,
+            user: userId,
+            accountStatus: 'ACTIVE'
+        };
 
-        const account = new Account(data);
-        await account.save();
+        const newAccount = new Account(accountData);
+        await newAccount.save();
 
-        res.status(201).json({
+        return res.status(201).json({
             success: true,
-            message: 'Cuenta creada exitosamente',
-            account
+            message: 'Cuenta bancaria creada exitosamente',
+            account: newAccount
         });
+
     } catch (error) {
-        res.status(500).json({
+        console.error('ERROR AL CREAR CUENTA:', error);
+        return res.status(500).json({
             success: false,
-            message: 'Error al crear la cuenta',
+            message: 'Error interno al procesar la cuenta',
             error: error.message
         });
     }
 };
 
-// Obtener todas las cuentas (activas)
+/**
+ * OBTENER TODAS LAS CUENTAS
+ */
 export const getAccounts = async (req, res) => {
     try {
+        const accounts = await Account.find()
+            .populate('user', 'UserName UserEmail UserRol')
+            .sort({ createdAt: -1 });
 
-        let accounts;
-       
-            accounts = await Account.find({ status: true })
-                .populate('user', 'UserName UserSurname UserEmail');
-        
-
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             total: accounts.length,
             accounts
         });
-
     } catch (error) {
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
-            message: 'Error al obtener las cuentas',
+            message: 'Error al obtener el listado de cuentas',
             error: error.message
         });
     }
 };
 
+/**
+ * CAMBIAR ESTADO DE CUENTA (ACTIVE / INACTIVE)
+ */
 export const changeAccountStatus = async (req, res) => {
     try {
         const { id } = req.params;
@@ -78,103 +104,69 @@ export const changeAccountStatus = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Cuenta no encontrada' });
         }
 
-
-        account.status = !account.status;
+        // Toggle de estado
+        account.accountStatus = (account.accountStatus === 'ACTIVE') ? 'INACTIVE' : 'ACTIVE';
         await account.save();
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
-            message: `Cuenta ${account.status ? 'activada' : 'desactivada'} exitosamente`,
-            data: account
+            message: `Estado de la cuenta ${account.accountNumber} actualizado a ${account.accountStatus}`,
+            account
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error al cambiar estado de la cuenta', error: error.message });
+        return res.status(500).json({
+            success: false,
+            message: 'Error al actualizar el estado',
+            error: error.message
+        });
     }
 };
 
-export const getAccountsByMovements = async (req, res) => {
+/**
+ * OBTENER RANKING DE CUENTAS POR MOVIMIENTOS
+ */
+export const getAccountRanking = async (req, res) => {
     try {
-        // Obtenemos si quiere orden 'asc' o 'desc' desde la URL, por defecto descendente
-        const { sort = 'desc' } = req.query;
+        // Aquí podrías agregar lógica de agregación según tus movimientos
+        const accounts = await Account.find()
+            .sort({ balance: -1 }) // Ejemplo: ranking por saldo
+            .limit(10)
+            .populate('user', 'UserName');
 
-        const accounts = await Account.aggregate([
-            {
-                // Buscamos todas las transacciones vinculadas a esta cuenta
-                $lookup: {
-                    from: "transactions",
-                    let: { accountId: "$_id" },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $or: [
-                                        { $eq: ["$originAccount", "$$accountId"] },
-                                        { $eq: ["$destinationAccount", "$$accountId"] }
-                                    ]
-                                }
-                            }
-                        }
-                    ],
-                    as: "movements"
-                }
-            },
-            {
-                // Contamos cuántos movimientos tuvo en total
-                $addFields: {
-                    totalMovements: { $size: "$movements" }
-                }
-            },
-            {
-                // Ordenamos según lo que pidió el admin
-                $sort: { totalMovements: sort === 'asc' ? 1 : -1 }
-            },
-            {
-                $project: {
-                    movements: 0
-                }
-            }
-        ]);
-
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
-            message: 'Cuentas ordenadas por cantidad de movimientos',
-            total: accounts.length,
-            data: accounts
+            ranking: accounts
         });
-
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error al obtener cuentas', error: error.message });
+        return res.status(500).json({
+            success: false,
+            message: 'Error al generar el ranking',
+            error: error.message
+        });
     }
 };
 
-export const getAccountDetailsAndTop5 = async (req, res) => {
+/**
+ * OBTENER DETALLES DE UNA CUENTA ESPECÍFICA
+ */
+export const getAccountDetails = async (req, res) => {
     try {
         const { id } = req.params;
-
-        const account = await Account.findById(id).populate('user', 'UserName UserSurname UserDPI UserEmail');
+        const account = await Account.findById(id).populate('user', 'UserName UserEmail UserPhone');
 
         if (!account) {
             return res.status(404).json({ success: false, message: 'Cuenta no encontrada' });
         }
 
-        const lastMovements = await Transaction.find({
-            $or: [{ originAccount: id }, { destinationAccount: id }]
-        })
-            .sort({ createdAt: -1 }) // El más reciente primero
-            .limit(5);
-
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
-            data: {
-                cuenta: account.accountNumber,
-                tipo: account.accountType,
-                saldoDisponible: account.balance,
-                propietario: account.user,
-                ultimos5Movimientos: lastMovements
-            }
+            account
         });
-
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error al obtener detalles', error: error.message });
+        return res.status(500).json({
+            success: false,
+            message: 'Error al obtener detalles',
+            error: error.message
+        });
     }
 };

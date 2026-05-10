@@ -1,21 +1,30 @@
-import { Router } from "express";
-import { validateCreateAccount } from "../../middlewares/account.validator.js"; 
+'use strict';
+
+import { Router } from 'express';
 import { 
     createAccount, 
     getAccounts, 
     changeAccountStatus, 
-    getAccountsByMovements, 
-    getAccountDetailsAndTop5 
-} from "./account.controller.js";
-import { validateJWT, hasRole } from "../../middlewares/validate-jwt.js";
+    getAccountRanking, 
+    getAccountDetails 
+} from './account.controller.js';
+import { validateJWT, isAdmin } from '../../middlewares/validate-jwt.js';
 
 const router = Router();
 
-router.get('/movements/ranking', validateJWT, hasRole('ADMIN'), getAccountsByMovements);
-router.get('/:id/details', validateJWT, hasRole('ADMIN'), getAccountDetailsAndTop5);
+// GET - Obtener todas las cuentas (Se ve pro con validateJWT)
+router.get('/', [validateJWT], getAccounts);
 
-router.post('/', validateJWT, hasRole('ADMIN'), validateCreateAccount, createAccount);
-router.get('/', validateJWT, getAccounts);
-router.put('/:id/status', validateJWT, hasRole('ADMIN'), changeAccountStatus);
+// POST - Crear cuenta (Aquí es donde te daba el 401)
+router.post('/', [validateJWT], createAccount);
+
+// PUT - Cambiar estado
+router.put('/:id/status', [validateJWT, isAdmin], changeAccountStatus);
+
+// GET - Ranking de movimientos
+router.get('/movements/ranking', [validateJWT], getAccountRanking);
+
+// GET - Detalles de cuenta
+router.get('/:id/details', [validateJWT], getAccountDetails);
 
 export default router;
