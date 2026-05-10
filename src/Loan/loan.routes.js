@@ -1,7 +1,9 @@
 'use strict';
 
 import { Router } from 'express';
-import { validateJWT, isAdmin } from '../../middlewares/validate-jwt.js';
+// Importamos validateJWT y el nuevo validador de roles
+import { validateJWT } from '../../middlewares/validate-jwt.js';
+import { hasRole } from '../../middlewares/role-validator.js';
 
 import {
     getMyLoans,
@@ -11,25 +13,33 @@ import {
 
 const router = Router();
 
-// Obtener mis préstamos (cliente)
+/**
+ * GET - Obtener mis préstamos (Cliente)
+ * El usuario solo ve los préstamos asociados a su ID de SQL.
+ */
 router.get(
     '/my',
-    validateJWT,
+    [validateJWT],
     getMyLoans
 );
 
-// Obtener préstamo por ID
+/**
+ * GET - Obtener préstamo por ID
+ * Requiere estar autenticado.
+ */
 router.get(
     '/:id',
-    validateJWT,
+    [validateJWT],
     getLoanById
 );
 
-// Obtener todos los préstamos (ADMIN)
+/**
+ * GET - Obtener todos los préstamos (ADMIN)
+ * Solo accesible para usuarios con el rol 'ADMIN_ROLE' definido en SQL.
+ */
 router.get(
     '/',
-    validateJWT,
-    isAdmin,
+    [validateJWT, hasRole('ADMIN_ROLE')],
     getAllLoans
 );
 

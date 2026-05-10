@@ -75,8 +75,23 @@ export const createCard = async (req, res) => {
         // OPCIÓN C: No mandaron nada -> El modelo pone 'cards/default_card' automáticamente
         // -----------------------------------------------------
 
+        // Pega esto justo antes de: const card = new Card(data);
+        const randomDigits = (n) => Math.floor(Math.random() * Math.pow(10, n)).toString().padStart(n, '0');
+
+        data.cardNumber = '4' + randomDigits(15);
+        data.cvv = randomDigits(3);
+
+        const now = new Date();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = String(now.getFullYear() + 4).slice(-2);
+        data.expirationDate = `${month}/${year}`;
+
         const card = new Card(data);
         await card.save();
+        await card.populate({ path: 'account', select: 'accountNumber accountType balance' });
+        res.status(201).json({ success: true, message: 'Tarjeta creada exitosamente', data: card });
+
+
 
         res.status(201).json({ 
             success: true, 

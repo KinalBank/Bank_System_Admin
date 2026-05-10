@@ -24,6 +24,10 @@ import authRoutes from '../src/Auth/auth.routes.js';
 import loanApplicationRoutes from '../src/LoanApplication/loanApplication.routes.js';
 import loanRoutes from '../src/Loan/loan.routes.js';
 import exchangeRoutes from '../src/Exchange/exchange.routes.js';
+import creditCardRoutes from '../src/CreditCard/creditCard.routes.js';
+import purchaseRoutes from '../src/Purchase/purchase.routes.js';
+import creditCardPaymentRoutes from '../src/CreditCardPayment/creditCardPayment.routes.js';
+
 
 
 const middleware = (app) => {
@@ -52,6 +56,9 @@ const routes = (app) => {
     app.use(`${BASE_URL}/loanApplications`, loanApplicationRoutes);
     app.use(`${BASE_URL}/loans`, loanRoutes);
     app.use(`${BASE_URL}/exchange`, exchangeRoutes);
+    app.use(`${BASE_URL}/creditCards`, creditCardRoutes);
+    app.use(`${BASE_URL}/purchases`, purchaseRoutes);
+    app.use(`${BASE_URL}/creditCardPayments`, creditCardPaymentRoutes);
 
 }
 

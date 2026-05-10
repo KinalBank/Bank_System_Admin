@@ -1,27 +1,21 @@
 'use strict';
 
 import { body, param } from 'express-validator';
-import { validateErrors } from './validate-errors.js'; 
+import { checkValidators } from "./check-validators.js";
 
 export const validateCreateCreditCard = [
+    // 1. Validamos solo lo que enviamos desde el Modal
     body('user', 'El ID del usuario es obligatorio').notEmpty().isMongoId(),
-    body('account', 'El ID de la cuenta asociada es obligatoria').notEmpty().isMongoId(),
-    body('type', 'Tipo de tarjeta inválido')
-        .optional()
-        .isIn(['CLASSIC', 'GOLD', 'PLATINUM', 'BLACK']),
-    body('creditLimit', 'El límite debe ser un número positivo')
-        .notEmpty()
-        .isFloat({ min: 1 }),
-    body('cutoffDate', 'La fecha de corte debe ser un día entre 1 y 28')
-        .notEmpty()
-        .isInt({ min: 1, max: 28 }),
-    body('interestRate', 'La tasa de interés debe ser un número')
-        .optional()
-        .isFloat({ min: 0 }),
-    validateErrors
-];
+    body('type', 'Tipo de tarjeta no válido').notEmpty().isIn(['CLASSIC', 'GOLD', 'PLATINUM', 'BLACK']),
+    body('creditLimit', 'El límite debe ser un número').isNumeric(),
+    
+    // 2. La cuenta la ponemos como opcional porque ahora es independiente
+    body('account')
+        .optional({ checkFalsy: true })
+        .isMongoId().withMessage('ID de cuenta no válido'),
 
-export const validateCreditCardId = [
-    param('id', 'El ID de la tarjeta no es válido').isMongoId(),
-    validateErrors
+    // 3. ¡IMPORTANTE! Elimina de aquí: cardNumber, cvv, expirationDate, holderName
+    // Si los dejas aquí como obligatorios, Node dará 400 antes de llegar al controlador.
+
+    checkValidators
 ];

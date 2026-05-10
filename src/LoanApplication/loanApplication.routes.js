@@ -1,7 +1,9 @@
 'use strict';
 
 import { Router } from "express";
-import { validateJWT, isAdmin } from "../../middlewares/validate-jwt.js";
+// Cambiamos isAdmin por hasRole
+import { validateJWT } from "../../middlewares/validate-jwt.js";
+import { hasRole } from "../../middlewares/role-validator.js";
 
 import {
     validateCreateLoanApplication,
@@ -20,51 +22,50 @@ import {
 
 const router = Router();
 
-// Crear solicitud (cliente)
+// ================= RUTAS DE CLIENTE =================
+
+// Crear solicitud
 router.post(
     '/',
-    validateJWT,
-    validateCreateLoanApplication,
+    [validateJWT, validateCreateLoanApplication],
     createLoanApplication
 );
-// Editar solicitud (cliente)
+
+// Editar solicitud
 router.put(
     '/:id',
-    validateJWT,
-    validateLoanApplicationId,
-    validateUpdateLoanApplication,
+    [validateJWT, validateLoanApplicationId, validateUpdateLoanApplication],
     updateLoanApplication
 );
-// Cancelar solicitud (cliente)
+
+// Cancelar solicitud
 router.put(
     '/:id/cancel',
-    validateJWT,
-    validateLoanApplicationId,
+    [validateJWT, validateLoanApplicationId],
     cancelLoanApplication
 );
 
 
-// Aprobar solicitud (ADMIN)
+// ================= RUTAS DE ADMIN (ADMIN_ROLE) =================
+
+// Aprobar solicitud
 router.put(
     '/:id/approve',
-    validateJWT,
-    isAdmin,
-    validateLoanApplicationId,
+    [validateJWT, hasRole('ADMIN_ROLE'), validateLoanApplicationId],
     approveLoanApplication
 );
-// Rechazar solicitud (ADMIN)
+
+// Rechazar solicitud
 router.put(
     '/:id/reject',
-    validateJWT,
-    isAdmin,
-    validateLoanApplicationId,
+    [validateJWT, hasRole('ADMIN_ROLE'), validateLoanApplicationId],
     rejectLoanApplication
 );
-// Listar todas las solicitudes (ADMIN)
+
+// Listar todas las solicitudes
 router.get(
     '/',
-    validateJWT,
-    isAdmin,
+    [validateJWT, hasRole('ADMIN_ROLE')],
     getLoanApplications
 );
 

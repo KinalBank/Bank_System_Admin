@@ -1,10 +1,10 @@
 'use strict';
 
 import { body } from 'express-validator';
-import { validateErrors } from './validate-errors.js';
+import { checkValidators } from "./check-validators.js";
 
 export const validateExtraFinancingPayment = [
     body('extraFinancingId', 'ID de extrafinanciamiento inválido').isMongoId(),
     body('accountId', 'ID de cuenta inválido').isMongoId(),
-    validateErrors
+    checkValidators
 ];

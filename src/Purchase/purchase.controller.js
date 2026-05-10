@@ -1,10 +1,19 @@
 'use strict';
 
 import Purchase from './purchase.model.js';
-import CreditCard from '../Card/creditCard.model.js';
+import CreditCard from '../CreditCard/creditCard.model.js';
 import Account from '../Account/account.model.js';
-import Transaction from '../Transaction/transaction.model.js';
 
+export const getPurchases = async (req, res) => {
+    try {
+        const { cardId } = req.query;
+        const filter = cardId ? { cardId } : {};
+        const purchases = await Purchase.find(filter).sort({ createdAt: -1 });
+        res.status(200).json({ success: true, data: purchases });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error al obtener compras', error: error.message });
+    }
+};
 export const processPurchase = async (req, res) => {
     try {
         const { description, amount, type, cardId } = req.body;
@@ -19,36 +28,22 @@ export const processPurchase = async (req, res) => {
                 return res.status(400).json({ success: false, message: 'Fondos insuficientes (Límite de crédito excedido)' });
             }
 
-            // Aumentar deuda (el middleware del modelo actualizará availableCredit)
-            card.totalDebt += amount;
-            await card.save();
+            await CreditCard.findByIdAndUpdate(cardId, { $inc: { totalDebt: amount } });
 
         } else if (type === 'DEBIT') {
             const account = await Account.findById(cardId);
             if (!account) return res.status(404).json({ success: false, message: 'Cuenta vinculada no encontrada' });
 
-            // Validación de saldo real
             if (amount > account.balance) {
                 return res.status(400).json({ success: false, message: 'Saldo insuficiente en la cuenta de débito' });
             }
 
-            // Debitar de la cuenta
-            account.balance -= amount;
-            await account.save();
+            await Account.findByIdAndUpdate(cardId, { $inc: { balance: -amount } });
         }
 
         // Registrar la compra
         const newPurchase = new Purchase({ description, amount, type, cardId });
         await newPurchase.save();
-
-        // Registrar en historial general de transacciones
-        const transaction = new Transaction({
-            type: 'PURCHASE',
-            amount,
-            description: `${description} - ${type}`,
-            status: 'COMPLETED'
-        });
-        await transaction.save();
 
         res.status(201).json({
             success: true,

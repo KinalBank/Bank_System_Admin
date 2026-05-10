@@ -16,7 +16,7 @@ const creditCardSchema = new Schema({
     account: {
         type: Schema.Types.ObjectId,
         ref: 'Account',
-        required: true
+        required: false
     },
     type: {
         type: String,
@@ -59,9 +59,8 @@ const creditCardSchema = new Schema({
     versionKey: false
 });
 
-creditCardSchema.pre('save', function (next) {
+creditCardSchema.pre('save', function () {
     this.availableCredit = this.creditLimit - this.totalDebt;
-    next();
 });
 
 export default model('CreditCard', creditCardSchema);
