@@ -60,15 +60,14 @@ export const createCard = async (req, res) => {
             });
         }
 
-        if (
-            account.user.toString() !== req.user._id.toString() &&
-            req.user.UserRol !== 'ADMIN'
-        ) {
-            return res.status(403).json({
-                success: false,
-                message: 'No autorizado para crear tarjeta en esta cuenta'
-            });
-        }
+        if (req.user.role !== 'ADMIN_ROLE') {
+    if (account.user.toString() !== req.user.id.toString()) {
+        return res.status(403).json({
+            success: false,
+            message: 'No autorizado para crear tarjeta en esta cuenta'
+        });
+    }
+}
 
         // Restricción bancaria
         if (account.accountType === 'AHORRO' && data.type === 'CREDIT') {

@@ -3,6 +3,26 @@ import Account from '../Account/account.model.js';
 import { generateJWT } from '../../helpers/generate-jwt.js';
 import { sendTokenEmail } from '../../helpers/email.helper.js';
 
+export const verifyUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+
+        if (user.isVerified) {
+            return res.status(400).json({ success: false, message: 'El usuario ya está verificado' });
+        }
+
+        user.isVerified = true;
+        await user.save();
+
+        res.status(200).json({ success: true, message: 'Usuario verificado exitosamente', data: user });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error al verificar usuario', error: error.message });
+    }
+};
+
 export const getUsers = async (req, res) => {
   try {
     const { page = 1, limit = 10, UserStatus } = req.query;
@@ -41,7 +61,7 @@ export const getUsers = async (req, res) => {
 export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
-    const loggedUserId = req.user._id;
+    const loggedUserId = req.user.id;
     const loggedUserRole = req.user.UserRol;
 
     if (loggedUserRole === 'USER' && loggedUserId.toString() !== id) {
@@ -81,12 +101,12 @@ export const createUser = async (req, res) => {
             accountNumber: randomAccountNumber.toString(),
             accountType: 'MONETARIA', // Por defecto
             balance: 0,
-            user: user._id,
+            user: user.id,
             bank: 'Banco Kinal'
         });
         await newAccount.save();
 
-      const token = await generateJWT(user._id, user.UserEmail, user.UserRol);
+      const token = await generateJWT(user.id, user.UserEmail, user.UserRol);
         
         try {
             await sendTokenEmail(user.UserEmail, token);
@@ -113,7 +133,7 @@ export const createUser = async (req, res) => {
 export const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const loggedUserId = req.user._id; 
+        const loggedUserId = req.user.id; 
         const loggedUserRole = req.user.UserRol;
         const data = req.body;
 
@@ -148,7 +168,7 @@ export const updateUser = async (req, res) => {
 export const changeUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const loggedUserId = req.user._id;
+    const loggedUserId = req.user.id;
 
     const user = await User.findById(id);
 

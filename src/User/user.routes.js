@@ -4,7 +4,8 @@ import {
     getUserById,
     createUser,
     updateUser,
-    changeUserStatus
+    changeUserStatus,
+    verifyUser
 } from './user.controller.js';
 
 import {
@@ -21,19 +22,21 @@ import { hasRole } from '../../middlewares/role-validator.js';
 const router = Router();
 
 // Solo el ADMIN puede ver la lista de todos los usuarios
-router.get('/', validateJWT, hasRole('ADMIN'), getUsers);
+router.get('/', validateJWT, hasRole('ADMIN_ROLE'), getUsers);
 
 // Ambos pueden ver perfiles (El controller valida que el USER solo vea el suyo)
 router.get('/:id', validateJWT, validateGetUserById, getUserById);
 
 // Solo el ADMIN puede crear usuarios (Regla del PDF)
-router.post('/', validateJWT, hasRole('ADMIN'), validateCreateUser, createUser);
+router.post('/', validateJWT, hasRole('ADMIN_ROLE'), validateCreateUser, createUser);
 
 // Ambos pueden editar (El controller valida que el USER solo se edite a sí mismo)
 router.put('/:id', validateJWT, validateUpdateUserRequest, updateUser);
 
 // Solo el ADMIN puede activar/desactivar usuarios
-router.put('/:id/status', validateJWT, hasRole('ADMIN'), validateUserStatusChange, changeUserStatus);
+router.put('/:id/status', validateJWT, hasRole('ADMIN_ROLE'), validateUserStatusChange, changeUserStatus);
+
+router.put('/:id/verify', validateJWT, hasRole('ADMIN_ROLE'), verifyUser);
 
 
 export default router;
