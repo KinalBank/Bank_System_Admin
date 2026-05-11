@@ -1,15 +1,19 @@
 'use strict';
 
 import { Router } from "express";
-// Cambiamos isAdmin por hasRole
 import { validateJWT } from "../../middlewares/validate-jwt.js";
 import { hasRole } from "../../middlewares/role-validator.js";
 
 import {
+    validateCreateLoanApplication,
+    validateUpdateLoanApplication,
     validateLoanApplicationId
 } from "../../middlewares/loanApplication.validator.js";
 
 import {
+    createLoanApplication,
+    updateLoanApplication,
+    cancelLoanApplication,
     approveLoanApplication,
     rejectLoanApplication,
     getLoanApplications
@@ -17,50 +21,51 @@ import {
 
 const router = Router();
 
-// ================= RUTAS DE CLIENTE =================
-
-// Crear solicitud
+// Crear solicitud (cliente)
 router.post(
     '/',
-    [validateJWT, validateCreateLoanApplication],
+    validateJWT,
+    validateCreateLoanApplication,
     createLoanApplication
 );
-
-// Editar solicitud
+// Editar solicitud (cliente)
 router.put(
     '/:id',
-    [validateJWT, validateLoanApplicationId, validateUpdateLoanApplication],
+    validateJWT,
+    validateLoanApplicationId,
+    validateUpdateLoanApplication,
     updateLoanApplication
 );
-
-// Cancelar solicitud
+// Cancelar solicitud (cliente)
 router.put(
     '/:id/cancel',
-    [validateJWT, validateLoanApplicationId],
+    validateJWT,
+    validateLoanApplicationId,
     cancelLoanApplication
 );
 
 
-// ================= RUTAS DE ADMIN (ADMIN_ROLE) =================
-
-// Aprobar solicitud
+// Aprobar solicitud (ADMIN)
 router.put(
     '/:id/approve',
-    [validateJWT, hasRole('ADMIN_ROLE'), validateLoanApplicationId],
+    validateJWT,
+    hasRole('ADMIN_ROLE'),
+    validateLoanApplicationId,
     approveLoanApplication
 );
-
-// Rechazar solicitud
+// Rechazar solicitud (ADMIN)
 router.put(
     '/:id/reject',
-    [validateJWT, hasRole('ADMIN_ROLE'), validateLoanApplicationId],
+    validateJWT,
+    hasRole('ADMIN_ROLE'),
+    validateLoanApplicationId,
     rejectLoanApplication
 );
-
-// Listar todas las solicitudes
+// Listar todas las solicitudes (ADMIN)
 router.get(
     '/',
-    [validateJWT, hasRole('ADMIN_ROLE')],
+    validateJWT,
+    hasRole('ADMIN_ROLE'),
     getLoanApplications
 );
 

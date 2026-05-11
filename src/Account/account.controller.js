@@ -105,12 +105,12 @@ export const changeAccountStatus = async (req, res) => {
         }
 
         // Toggle de estado
-        account.accountStatus = (account.accountStatus === 'ACTIVE') ? 'INACTIVE' : 'ACTIVE';
+        account.status = !account.status;       
         await account.save();
 
         return res.status(200).json({
             success: true,
-            message: `Estado de la cuenta ${account.accountNumber} actualizado a ${account.accountStatus}`,
+            message: `Estado de la cuenta ${account.accountNumber} actualizado a ${account.status}`,
             account
         });
     } catch (error) {

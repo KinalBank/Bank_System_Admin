@@ -14,7 +14,9 @@ import {
     validateGetUserById
 } from '../../middlewares/user-validator.js';
 
-import { validateJWT, hasRole } from '../../middlewares/validate-jwt.js';
+import { validateJWT } from '../../middlewares/validate-jwt.js';
+import { hasRole } from '../../middlewares/role-validator.js';
+
 
 const router = Router();
 

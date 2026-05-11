@@ -10,7 +10,7 @@ export const validateCreateTransaction = [
         .notEmpty().withMessage('El tipo es requerido')
         .isIn([
             'DEPOSIT',
-            'CARD_WITHDRAWAL',
+            'WITHDRAWAL',
             'SERVICE_PAYMENT',
             'LOAN_PAYMENT',
             'TRANSFER'
