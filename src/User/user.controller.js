@@ -219,3 +219,21 @@ export const createDefaultAdmin = async () => {
         console.error('Error al crear admin:', err.message);
     }
 };
+
+export const changeUserRole = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { UserRol } = req.body;
+
+        if (!['USER', 'ADMIN'].includes(UserRol)) {
+            return res.status(400).json({ success: false, message: 'Rol inválido' });
+        }
+
+        const user = await User.findByIdAndUpdate(id, { UserRol }, { new: true });
+        if (!user) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+
+        res.status(200).json({ success: true, message: `Rol actualizado a ${UserRol}`, data: user });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+};

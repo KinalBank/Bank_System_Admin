@@ -7,8 +7,8 @@ import CreditCard from '../CreditCard/creditCard.model.js';
 export const getFinancingsByCard = async (req, res) => {
     try {
         const { creditCardId } = req.params;
-        const financings = await ExtraFinancing.find({ creditCard: creditCardId });
-        res.status(200).json({ success: true, data: financings });
+        const financings = await ExtraFinancing.find({ creditCard: creditCardId })
+            .populate('user', 'UserName UserSurname UserEmail uid'); res.status(200).json({ success: true, data: financings });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error al obtener financiamientos', error: error.message });
     }

@@ -5,7 +5,8 @@ import {
     createUser,
     updateUser,
     changeUserStatus,
-    verifyUser
+    verifyUser,
+    changeUserRole
 } from './user.controller.js';
 
 import {
@@ -37,6 +38,8 @@ router.put('/:id', validateJWT, validateUpdateUserRequest, updateUser);
 router.put('/:id/status', validateJWT, hasRole('ADMIN_ROLE'), validateUserStatusChange, changeUserStatus);
 
 router.put('/:id/verify', validateJWT, hasRole('ADMIN_ROLE'), verifyUser);
+
+router.put('/:id/role', validateJWT, hasRole('ADMIN_ROLE'), changeUserRole);
 
 
 export default router;

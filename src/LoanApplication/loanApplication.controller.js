@@ -133,19 +133,6 @@ export const approveLoanApplication = async (req, res) => {
         await generateLoanDetails(loan._id, application.amount, application.termMonths, interestRatePercent);
         await Account.findByIdAndUpdate(application.account, { $inc: { balance: application.amount } });
 
-        const newTransaction = new Transaction({
-            type: 'DEPOSIT', 
-            amount: application.amount,
-            amountInGTQ: application.amount,
-            currency: 'GTQ',
-            originAccount: null, 
-            destinationAccount: account._id, 
-            loan: loan._id,
-            description: 'Desembolso de Préstamo Aprobado'
-        });
-
-        await newTransaction.save();
-
 
         application.status = 'APPROVED';
         application.reviewedBy = req.user.id;

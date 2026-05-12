@@ -75,7 +75,7 @@ export const createAccount = async (req, res) => {
 export const getAccounts = async (req, res) => {
     try {
         const accounts = await Account.find()
-            .populate('user', 'UserName UserEmail UserRol')
+            .populate('user', 'UserName UserSurname UserEmail UserRol')
             .sort({ createdAt: -1 });
 
         return res.status(200).json({
@@ -105,7 +105,7 @@ export const changeAccountStatus = async (req, res) => {
         }
 
         // Toggle de estado
-        account.status = !account.status;       
+        account.status = !account.status;
         await account.save();
 
         return res.status(200).json({

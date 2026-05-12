@@ -29,6 +29,14 @@ export const payCreditCard = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Tarjeta o Cuenta no encontradas' });
         }
 
+        if (card.user.toString() !== account.user.toString()) {
+    return res.status(403).json({
+        success: false,
+        message: 'La cuenta seleccionada no pertenece al titular de la tarjeta'
+    });
+}
+
+
         if (account.balance < amount) {
             return res.status(400).json({ success: false, message: 'Saldo insuficiente en la cuenta' });
         }

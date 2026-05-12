@@ -16,9 +16,16 @@ export const payLoanInstallment = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Préstamo o Cuenta no encontrados' });
         }
 
-        const installment = await LoanDetail.findOne({ 
-            loan: loanId, 
-            status: 'PENDING' 
+        if (loan.borrower.toString() !== account.user.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'La cuenta seleccionada no pertenece al titular del préstamo'
+            });
+        }
+
+        const installment = await LoanDetail.findOne({
+            loan: loanId,
+            status: 'PENDING'
         }).sort({ installmentNumber: 1 });
 
         if (!installment) {

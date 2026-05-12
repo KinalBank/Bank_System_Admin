@@ -16,9 +16,16 @@ export const payExtraFinancingInstallment = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Extrafinanciamiento o Cuenta no encontrados' });
         }
 
-        const installment = await ExtraFinancingDetail.findOne({ 
-            extraFinancing: extraFinancingId, 
-            status: 'PENDING' 
+        if (extra.user.toString() !== account.user.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'La cuenta seleccionada no pertenece al titular del financiamiento'
+            });
+        }
+
+        const installment = await ExtraFinancingDetail.findOne({
+            extraFinancing: extraFinancingId,
+            status: 'PENDING'
         }).sort({ installmentNumber: 1 });
 
         if (!installment) {
