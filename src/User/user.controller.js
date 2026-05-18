@@ -3,6 +3,9 @@ import Account from '../Account/account.model.js';
 import { generateJWT } from '../../helpers/generate-jwt.js';
 import { sendTokenEmail } from '../../helpers/email.helper.js';
 
+/**
+ * Verificar al usuario
+ */
 export const verifyUser = async (req, res) => {
     try {
         const { id } = req.params;
@@ -23,6 +26,9 @@ export const verifyUser = async (req, res) => {
     }
 };
 
+/**
+ * Obtener todos los usuarios
+ */
 export const getUsers = async (req, res) => {
   try {
     const { page = 1, limit = 10, UserStatus } = req.query;
@@ -58,6 +64,9 @@ export const getUsers = async (req, res) => {
   }
 };
 
+/**
+ * Obtener detalles de un usuario por ID
+ */
 export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -80,6 +89,9 @@ export const getUserById = async (req, res) => {
   }
 };
 
+/**
+ * Crear un nuevo usuario
+ */
 export const createUser = async (req, res) => {
   try {
     const userData = req.body;
@@ -130,6 +142,9 @@ export const createUser = async (req, res) => {
   }
 };
 
+/**
+ * Actualizar información de un usuario
+ */
 export const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
@@ -165,6 +180,9 @@ export const updateUser = async (req, res) => {
     }
 };
 
+/**
+ * Cambiar estado del usuario
+ */
 export const changeUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -193,6 +211,9 @@ export const changeUserStatus = async (req, res) => {
   }
 };
 
+/**
+ * Crear un usuario ADMIN por defecto
+ */
 export const createDefaultAdmin = async () => {
     try {
         const adminExists = await User.findOne({ UserEmail: 'admin@kinal.edu.gt' });
@@ -220,6 +241,9 @@ export const createDefaultAdmin = async () => {
     }
 };
 
+/**
+ * Cambiar rol del usuario
+ */
 export const changeUserRole = async (req, res) => {
     try {
         const { id } = req.params;

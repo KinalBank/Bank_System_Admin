@@ -6,7 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import helmet from 'helmet';
-import { corsOptions } from './cors-configuration.js'; // Agregué el .js, es buena práctica en módulos
+import { corsOptions } from './cors-configuration.js';
 import { dbConnection } from './db.js';
 import { helmetConfiguration } from './helmet-configuration.js';
 import { requestLimit } from '../middlewares/request-limit.js';

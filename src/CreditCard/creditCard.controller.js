@@ -2,6 +2,9 @@
 
 import CreditCard from './creditCard.model.js';
 
+/**
+ * Obtener todas las tarjetas de credito
+ */
 export const getAllCreditCards = async (req, res) => {
     try {
         const { page = 1, limit = 10 } = req.query;
@@ -24,6 +27,9 @@ export const getAllCreditCards = async (req, res) => {
     }
 };
 
+/**
+ * Obtener tarjetas de credito por medio del usuario
+ */
 export const getCardsByUser = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -42,6 +48,9 @@ const generatePAN = () => {
     return prefix + random;
 };
 
+/**
+ * Crear tarjeta de credito
+ */
 export const createCreditCard = async (req, res) => {
     try {
         // El frontend ahora solo envía lo estrictamente necesario

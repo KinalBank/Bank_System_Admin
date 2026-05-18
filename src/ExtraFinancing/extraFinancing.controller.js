@@ -4,6 +4,9 @@ import ExtraFinancing from './extraFinancing.model.js';
 import ExtraFinancingDetail from '../ExtraFinancingDetail/extraFinancingDetail.model.js';
 import CreditCard from '../CreditCard/creditCard.model.js';
 
+/**
+ * Obtener financiamiento por tarjetas
+ */
 export const getFinancingsByCard = async (req, res) => {
     try {
         const { creditCardId } = req.params;
@@ -14,6 +17,9 @@ export const getFinancingsByCard = async (req, res) => {
     }
 };
 
+/**
+ * Crear extra-financiamineto 
+ */
 export const createExtraFinancing = async (req, res) => {
     try {
         const { creditCard, totalAmount, installments, description, interestRate } = req.body;
@@ -72,6 +78,9 @@ export const createExtraFinancing = async (req, res) => {
     }
 };
 
+/**
+ * Obtener todos los financiamientos
+ */
 export const getAllFinancings = async (req, res) => {
     try {
         const financings = await ExtraFinancing.find()

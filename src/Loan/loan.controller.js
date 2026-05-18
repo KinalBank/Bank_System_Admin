@@ -4,6 +4,9 @@ import Loan from './loan.model.js';
 import LoanDetail from '../LoanDetail/loanDetail.model.js';
 import Account from '../Account/account.model.js';
 
+/**
+ * Generar detalles de prestamo
+ */
 const generateLoanDetails = async (loanId, totalAmount, months, annualInterestRate) => {
     const monthlyRate = (annualInterestRate / 100) / 12;
     const monthlyPayment = monthlyRate === 0
@@ -35,7 +38,9 @@ const generateLoanDetails = async (loanId, totalAmount, months, annualInterestRa
     await LoanDetail.insertMany(details);
 };
 
-// Crear préstamo directo (ADMIN)
+/**
+ * Crear prestamo directo
+ */
 export const createLoan = async (req, res) => {
     try {
         const { borrower, account, amount, termMonths, interestRate } = req.body;
@@ -68,7 +73,9 @@ export const createLoan = async (req, res) => {
     }
 };
 
-// Mis préstamos (Cliente)
+/**
+ * Mi prestamo como usuario
+ */
 export const getMyLoans = async (req, res) => {
     try {
         const loans = await Loan.find({ borrower: req.user.id })
@@ -80,7 +87,9 @@ export const getMyLoans = async (req, res) => {
     }
 };
 
-// Todos los préstamos (Admin)
+/**
+ * Todos los préstamos (Admin)
+ */
 export const getAllLoans = async (req, res) => {
     try {
         const loans = await Loan.find()
@@ -93,7 +102,9 @@ export const getAllLoans = async (req, res) => {
     }
 };
 
-// Préstamo por ID
+/**
+ * Préstamo por ID
+ */
 export const getLoanById = async (req, res) => {
     try {
         const loan = await Loan.findById(req.params.id)

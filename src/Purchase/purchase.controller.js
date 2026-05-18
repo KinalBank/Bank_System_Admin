@@ -4,6 +4,9 @@ import Purchase from './purchase.model.js';
 import CreditCard from '../CreditCard/creditCard.model.js';
 import Account from '../Account/account.model.js';
 
+/**
+ * OBTENER COMPRAS REALIZADAS POR TARJETA
+ */
 export const getPurchases = async (req, res) => {
     try {
         const { cardId } = req.query;
@@ -14,6 +17,10 @@ export const getPurchases = async (req, res) => {
         res.status(500).json({ success: false, message: 'Error al obtener compras', error: error.message });
     }
 };
+
+/**
+ * Procesar una compra
+ */
 export const processPurchase = async (req, res) => {
     try {
         const { description, amount, type, cardId } = req.body;

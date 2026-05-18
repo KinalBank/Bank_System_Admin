@@ -30,8 +30,6 @@ export const dbConnection = async () => {
             console.log('MongoDB | desconectado de mongoDB');
         });
 
-        // Conexion
-        // Menciona que URI_MongoDB es una variable de entorno
         await mongoose.connect(process.env.URI_MONGODB, {
             serverSelectionTimeoutMS: 5000,
             maxPoolSize: 10,
@@ -44,6 +42,7 @@ export const dbConnection = async () => {
         process.exit(1);
     }
 };
+
 //Ciere Controlado
 const gracefulShutdown = async (signal) => {
     console.log(`MongoDB | Received ${signal}, Closing database connection...`);

@@ -5,6 +5,9 @@ import Loan from '../Loan/loan.model.js';
 import Account from '../Account/account.model.js';
 import Transaction from '../Transaction/transaction.model.js';
 
+/**
+ * Obtener detalles de un prestamo
+ */
 export const getLoanDetails = async (req, res) => {
     try {
         const { loanId } = req.params;
@@ -19,6 +22,9 @@ export const getLoanDetails = async (req, res) => {
     }
 };
 
+/**
+ * Pagar una couta del prestamo 
+ */
 export const payInstallment = async (req, res) => {
     try {
         const { loanId, accountId } = req.body;
@@ -38,7 +44,6 @@ export const payInstallment = async (req, res) => {
         if (account.balance < installment.amount)
             return res.status(400).json({ success: false, message: 'Saldo insuficiente en la cuenta seleccionada' });
 
-        // ✅ findByIdAndUpdate en lugar de .save() — evita re-validación del schema
         await Account.findByIdAndUpdate(accountId, { $inc: { balance: -installment.amount } });
 
         await LoanDetail.findByIdAndUpdate(installment._id, {
@@ -46,12 +51,10 @@ export const payInstallment = async (req, res) => {
             paymentDate: new Date()
         });
 
-        // ✅ Contar cuántas PENDING quedan tras marcar esta como pagada
         const remainingPending = await LoanDetail.countDocuments({ loan: loanId, status: 'PENDING' });
 
         let newBalance, newStatus;
         if (remainingPending === 0) {
-            // Última cuota — cerrar limpio sin residuo de redondeo
             newBalance = 0;
             newStatus = 'PAID';
         } else {
@@ -59,7 +62,7 @@ export const payInstallment = async (req, res) => {
             newStatus = loan.status;
         }
 
-        // ✅ findByIdAndUpdate en lugar de .save()
+
         await Loan.findByIdAndUpdate(loanId, {
             remainingBalance: newBalance,
             status: newStatus

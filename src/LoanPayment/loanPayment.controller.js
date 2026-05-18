@@ -5,6 +5,9 @@ import LoanDetail from './loanDetail.model.js';
 import Account from '../Account/account.model.js';
 import Transaction from '../Transaction/transaction.model.js';
 
+/**
+ * Pagar una couta del prestamo
+ */
 export const payLoanInstallment = async (req, res) => {
     try {
         const { loanId, accountId } = req.body;

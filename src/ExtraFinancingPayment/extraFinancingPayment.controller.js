@@ -5,6 +5,9 @@ import ExtraFinancingDetail from '../ExtraFinancingDetail/extraFinancingDetail.m
 import ExtraFinancingPayment from './extraFinancingPayment.model.js';
 import Account from '../Account/account.model.js';
 
+/**
+ * Realizar el pago de una cuota del financiamiento
+ */
 export const payExtraFinancingInstallment = async (req, res) => {
     try {
         const { extraFinancingId, accountId } = req.body;

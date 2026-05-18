@@ -5,6 +5,9 @@ import Loan from '../Loan/loan.model.js';
 import LoanDetail from '../LoanDetail/loanDetail.model.js';
 import Account from '../Account/account.model.js';
 
+/**
+ * Generar detalles de solicitud de prestamo
+ */
 const generateLoanDetails = async (loanId, totalAmount, months, annualInterestRate) => {
     const monthlyRate = (annualInterestRate / 100) / 12;
     const monthlyPayment = monthlyRate === 0
@@ -36,7 +39,9 @@ const generateLoanDetails = async (loanId, totalAmount, months, annualInterestRa
     await LoanDetail.insertMany(details);
 };
 
-// Crear solicitud (Cliente)
+/**
+ * Crear una solicitud de prestamo
+ */
 export const createLoanApplication = async (req, res) => {
     try {
         const application = new LoanApplication({
@@ -51,7 +56,9 @@ export const createLoanApplication = async (req, res) => {
     }
 };
 
-// Editar solicitud (Cliente, solo si PENDING)
+/**
+ * Editar solicitud de prestamo
+ */
 export const updateLoanApplication = async (req, res) => {
     try {
         const { id } = req.params;
@@ -73,7 +80,9 @@ export const updateLoanApplication = async (req, res) => {
     }
 };
 
-// Cancelar solicitud (Cliente, solo si PENDING)
+/**
+ * Cancelar solicitud de prestamo
+ */
 export const cancelLoanApplication = async (req, res) => {
     try {
         const { id } = req.params;
@@ -95,7 +104,9 @@ export const cancelLoanApplication = async (req, res) => {
     }
 };
 
-// Aprobar solicitud (ADMIN)
+/**
+ * Aprobar solicitud
+ */
 export const approveLoanApplication = async (req, res) => {
     try {
         const { id } = req.params;
@@ -149,7 +160,9 @@ export const approveLoanApplication = async (req, res) => {
     }
 };
 
-// Rechazar solicitud (ADMIN)
+/**
+ * Rechazar solicitud
+ */
 export const rejectLoanApplication = async (req, res) => {
     try {
         const { id } = req.params;
@@ -171,7 +184,9 @@ export const rejectLoanApplication = async (req, res) => {
     }
 };
 
-// Listar todas (ADMIN)
+/**
+ * Listar solicitudes de prestamo
+ */
 export const getLoanApplications = async (req, res) => {
     try {
         const applications = await LoanApplication.find()

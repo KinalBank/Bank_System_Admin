@@ -2,7 +2,9 @@ import Card from './card.model.js';
 import Account from '../Account/account.model.js';
 import { cloudinary } from '../../middlewares/file-uploader.js';
 
-// Obtener todas las tarjetas (con datos de Cuenta y Usuario)
+/**
+ * Obtener todas las tarjetas
+ */
 export const getCards = async (req, res) => {
     try {
         const { page = 1, limit = 10, isActive = true } = req.query;
@@ -42,7 +44,9 @@ export const getCards = async (req, res) => {
     }
 };
 
-// Crear nueva tarjeta vinculada a una cuenta
+/**
+ * Crear una nueva tarjeta a una cuenta vinculada
+ */
 export const createCard = async (req, res) => {
     try {
 
@@ -123,7 +127,9 @@ export const createCard = async (req, res) => {
     }
 };
 
-// Actualizar tarjeta (Imagen o Datos)
+/**
+ * Actualizar tarjeta
+ */
 export const updateCard = async (req, res) => {
     try {
         const { id } = req.params;
@@ -158,7 +164,9 @@ export const updateCard = async (req, res) => {
     }
 };
 
-// Activar/Desactivar tarjeta
+/**
+ * Activar/Desactivar tarjeta
+ */
 export const changeCardStatus = async (req, res) => {
     try {
         const { id } = req.params;
@@ -179,7 +187,9 @@ export const changeCardStatus = async (req, res) => {
     }
 };
 
-
+/**
+ * Aprobar tarjeta
+ */
 export const approveCard = async (req, res) => {
     try {
         const { id } = req.params;

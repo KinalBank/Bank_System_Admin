@@ -3,7 +3,9 @@ import { generateJWT } from '../../helpers/generate-jwt.js';
 import { sendTokenEmail } from '../../helpers/email.helper.js';
 
 
-
+/**
+ * Logea al usuario
+ */
 export const login = async (req, res) => {
     try {
         const { UserEmail, UserPassword } = req.body;

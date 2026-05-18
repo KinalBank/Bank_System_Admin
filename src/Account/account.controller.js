@@ -4,7 +4,7 @@ import Account from './account.model.js';
 import User from '../User/user.model.js';
 
 /**
- * CREAR UNA CUENTA (ADMIN)
+ * Crear una cuenta
  * Nota: El bypass del middleware permite que esto pase aunque el token falle.
  */
 export const createAccount = async (req, res) => {
@@ -70,7 +70,7 @@ export const createAccount = async (req, res) => {
 };
 
 /**
- * OBTENER TODAS LAS CUENTAS
+ * Obtener todas las cuentas
  */
 export const getAccounts = async (req, res) => {
     try {
@@ -93,7 +93,7 @@ export const getAccounts = async (req, res) => {
 };
 
 /**
- * CAMBIAR ESTADO DE CUENTA (ACTIVE / INACTIVE)
+ * Cambiar el estado de la cuenta (Activa / Inactiva)
  */
 export const changeAccountStatus = async (req, res) => {
     try {
@@ -123,7 +123,7 @@ export const changeAccountStatus = async (req, res) => {
 };
 
 /**
- * OBTENER RANKING DE CUENTAS POR MOVIMIENTOS
+ * Obtener ranking de cuentas por movimientos
  */
 export const getAccountRanking = async (req, res) => {
     try {
@@ -147,7 +147,7 @@ export const getAccountRanking = async (req, res) => {
 };
 
 /**
- * OBTENER DETALLES DE UNA CUENTA ESPECÍFICA
+ * Obtener detalles de cuentas especificas
  */
 export const getAccountDetails = async (req, res) => {
     try {

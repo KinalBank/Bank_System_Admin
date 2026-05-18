@@ -3,7 +3,9 @@
 import Favorite from './favorite.model.js';
 import Account from '../Account/account.model.js';
 
-// Agregar una cuenta a favoritos
+/**
+ * Agregar una cuenta a favoritos
+ */
 export const addFavorite = async (req, res) => {
     try {
         const { accountId, alias } = req.body;
@@ -38,7 +40,9 @@ export const addFavorite = async (req, res) => {
     }
 };
 
-// Obtener los favoritos del usuario logueado
+/**
+ * Obtener los favoritos
+ */
 export const getMyFavorites = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -62,7 +66,9 @@ export const getMyFavorites = async (req, res) => {
     }
 };
 
-// Eliminar un favorito
+/**
+ * Eliminar un favorito
+ */
 export const removeFavorite = async (req, res) => {
     try {
         const { id } = req.params;

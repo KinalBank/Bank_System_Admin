@@ -2,6 +2,9 @@
 
 import ExtraFinancingDetail from './extraFinancingDetail.model.js';
 
+/**
+ * Obtener detalle de coutas del financiamiento
+ */
 export const getFinancingDetails = async (req, res) => {
     try {
         const { financingId } = req.params;

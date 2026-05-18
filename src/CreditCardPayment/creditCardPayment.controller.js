@@ -4,7 +4,9 @@ import CreditCard from '../CreditCard/creditCard.model.js';
 import Account from '../Account/account.model.js';
 import CreditCardPayment from './creditCardPayment.model.js';
 
-
+/**
+ * Obtener pagos de tarjetas de credito
+ */
 export const getCreditCardPayments = async (req, res) => {
     try {
         const { creditCardId } = req.query;
@@ -18,6 +20,9 @@ export const getCreditCardPayments = async (req, res) => {
     }
 };
 
+/**
+ * Realizar el pago de la tarjeta
+ */
 export const payCreditCard = async (req, res) => {
     try {
         const { creditCardId, accountId, amount } = req.body;

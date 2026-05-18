@@ -6,7 +6,9 @@ import Card from '../Card/card.model.js';
 import Loan from '../Loan/loan.model.js';
 import { convertCurrency } from '../Exchange/exchange.service.js';
 
-// GET todas las transacciones (ADMIN)
+/**
+ * Obtener toads las transacciones
+ */
 export const getAllTransactions = async (req, res) => {
     try {
         const { page = 1, limit = 20, type, status } = req.query;
@@ -42,7 +44,9 @@ export const getAllTransactions = async (req, res) => {
     }
 };
 
-// 1. Crear una transacción
+/**
+ * Crear una transacción
+ */
 export const createTransaction = async (req, res) => {
     try {
         const {
@@ -227,7 +231,9 @@ export const createTransaction = async (req, res) => {
     }
 };
 
-// 2. Obtener transacciones del usuario logueado
+/**
+ * Obtener transacciones
+ */
 export const getTransactions = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -261,7 +267,9 @@ export const getTransactions = async (req, res) => {
     }
 };
 
-// 3. Historial de una cuenta específica
+/**
+ * Historial de cuenta de un usuario
+ */
 export const getAccountHistory = async (req, res) => {
     try {
         const { id } = req.params;
@@ -311,7 +319,9 @@ export const getAccountHistory = async (req, res) => {
     }
 };
 
-// 4. Revertir un depósito (solo dentro del primer minuto)
+/**
+ * Revertir deposito
+ */
 export const revertDeposit = async (req, res) => {
     try {
         const { id } = req.params;

@@ -2,7 +2,9 @@
 
 import Product from './product.model.js';
 
-// 1. Ver catálogo completo (Para todos los usuarios)
+/**
+ * Ver catalogo completo de productos/servicios
+ */
 export const getProducts = async (req, res) => {
     try {
         const { page = 1, limit = 10, type } = req.query;
@@ -33,7 +35,9 @@ export const getProducts = async (req, res) => {
     }
 };
 
-// 2. Crear producto/servicio (SOLO ADMIN)
+/**
+ * Crear un servicio o producto
+ */
 export const createProduct = async (req, res) => {
     try {
         const product = new Product(req.body);
@@ -49,7 +53,9 @@ export const createProduct = async (req, res) => {
     }
 };
 
-// 3. Actualizar producto/servicio (SOLO ADMIN)
+/**
+ * Actualizar producto/servicio
+ */
 export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
@@ -63,7 +69,9 @@ export const updateProduct = async (req, res) => {
     }
 };
 
-// 4. Desactivar producto (SOLO ADMIN)
+/**
+ * Desactivar un servicio o producto
+ */
 export const deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
