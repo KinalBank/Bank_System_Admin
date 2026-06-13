@@ -7,23 +7,35 @@ import { sendTokenEmail } from '../../helpers/email.helper.js';
  * Verificar al usuario
  */
 export const verifyUser = async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-        const user = await User.findById(id);
-        if (!user) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
 
-        if (user.isVerified) {
-            return res.status(400).json({ success: false, message: 'El usuario ya está verificado' });
-        }
-
-        user.isVerified = true;
-        await user.save();
-
-        res.status(200).json({ success: true, message: 'Usuario verificado exitosamente', data: user });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error al verificar usuario', error: error.message });
+    if (user.isVerified) {
+      return res.status(400).json({ success: false, message: 'El usuario ya está verificado' });
     }
+
+    user.isVerified = true;
+    await user.save();
+
+    try {
+      const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:5149';
+      await fetch(`${authServiceUrl}/api/v1/Auth/verify-by-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.UserEmail })
+      });
+    } catch (syncError) {
+      console.error('Error al sincronizar verificación con .NET:', syncError.message);
+
+    }
+
+    res.status(200).json({ success: true, message: 'Usuario verificado exitosamente', data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error al verificar usuario', error: error.message });
+  }
 };
 
 /**
@@ -74,7 +86,7 @@ export const getUserById = async (req, res) => {
     const loggedUserRole = req.user.UserRol;
 
     if (loggedUserRole === 'USER' && loggedUserId.toString() !== id) {
-        return res.status(403).json({ success: false, message: 'Acceso denegado: Solo puedes ver tu propio perfil.' });
+      return res.status(403).json({ success: false, message: 'Acceso denegado: Solo puedes ver tu propio perfil.' });
     }
 
     const user = await User.findById(id);
@@ -97,7 +109,7 @@ export const createUser = async (req, res) => {
     const userData = req.body;
 
     if (userData.UserRol === 'ADMIN') {
-        userData.isVerified = true;
+      userData.isVerified = true;
     }
 
     // 1. Guardamos al usuario (ya pasó por las validaciones de los Q100)
@@ -106,32 +118,32 @@ export const createUser = async (req, res) => {
 
     let newAccount = null;
     if (user.UserRol === 'USER' || !user.UserRol) {
-        // Genera un número de 10 dígitos aleatorio
-        const randomAccountNumber = Math.floor(Math.random() * 9000000000) + 1000000000; 
-        
-        newAccount = new Account({
-            accountNumber: randomAccountNumber.toString(),
-            accountType: 'MONETARIA', // Por defecto
-            balance: 0,
-            user: user.id,
-            bank: 'Banco Kinal'
-        });
-        await newAccount.save();
+      // Genera un número de 10 dígitos aleatorio
+      const randomAccountNumber = Math.floor(Math.random() * 9000000000) + 1000000000;
+
+      newAccount = new Account({
+        accountNumber: randomAccountNumber.toString(),
+        accountType: 'MONETARIA', // Por defecto
+        balance: 0,
+        user: user.id,
+        bank: 'Banco Kinal'
+      });
+      await newAccount.save();
 
       const token = await generateJWT(user.id, user.UserEmail, user.UserRol);
-        
-        try {
-            await sendTokenEmail(user.UserEmail, token);
-        } catch (emailError) {
-            console.log("No se pudo enviar el correo de verificación:", emailError);
-        }  
+
+      try {
+        await sendTokenEmail(user.UserEmail, token);
+      } catch (emailError) {
+        console.log("No se pudo enviar el correo de verificación:", emailError);
+      }
     }
-    
+
     res.status(201).json({
       success: true,
       message: 'Usuario creado exitosamente',
       data: user,
-      cuentaAsignada: newAccount 
+      cuentaAsignada: newAccount
     });
   } catch (error) {
     res.status(400).json({
@@ -146,38 +158,38 @@ export const createUser = async (req, res) => {
  * Actualizar información de un usuario
  */
 export const updateUser = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const loggedUserId = req.user.id; 
-        const loggedUserRole = req.user.UserRol;
-        const data = req.body;
+  try {
+    const { id } = req.params;
+    const loggedUserId = req.user.id;
+    const loggedUserRole = req.user.UserRol;
+    const data = req.body;
 
-        if (loggedUserRole === 'USER' && loggedUserId.toString() !== id) {
-            return res.status(403).json({ success: false, message: 'No tienes permiso para editar el perfil de otro usuario' });
-        }
-
-        const targetUser = await User.findById(id);
-        if (!targetUser) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
-
-        if (targetUser.UserRol === 'ADMIN' && loggedUserId.toString() !== id) {
-            return res.status(403).json({ success: false, message: 'No puedes editar a otro usuario Administrador' });
-        }
-
-        delete data.UserDPI;
-        delete data.UserPassword;
-        delete data.UserRol; 
-
-        const userUpdated = await User.findByIdAndUpdate(id, data, { new: true });
-
-        res.status(200).json({ 
-            success: true, 
-            message: 'Perfil actualizado correctamente', 
-            userUpdated 
-        });
-
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+    if (loggedUserRole === 'USER' && loggedUserId.toString() !== id) {
+      return res.status(403).json({ success: false, message: 'No tienes permiso para editar el perfil de otro usuario' });
     }
+
+    const targetUser = await User.findById(id);
+    if (!targetUser) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+
+    if (targetUser.UserRol === 'ADMIN' && loggedUserId.toString() !== id) {
+      return res.status(403).json({ success: false, message: 'No puedes editar a otro usuario Administrador' });
+    }
+
+    delete data.UserDPI;
+    delete data.UserPassword;
+    delete data.UserRol;
+
+    const userUpdated = await User.findByIdAndUpdate(id, data, { new: true });
+
+    res.status(200).json({
+      success: true,
+      message: 'Perfil actualizado correctamente',
+      userUpdated
+    });
+
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 };
 
 /**
@@ -195,7 +207,7 @@ export const changeUserStatus = async (req, res) => {
     }
 
     if (user.UserRol === 'ADMIN' && loggedUserId.toString() !== id) {
-        return res.status(403).json({ success: false, message: 'Operación denegada: No puedes desactivar a otro Administrador' });
+      return res.status(403).json({ success: false, message: 'Operación denegada: No puedes desactivar a otro Administrador' });
     }
 
     user.UserStatus = user.UserStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
@@ -215,49 +227,49 @@ export const changeUserStatus = async (req, res) => {
  * Crear un usuario ADMIN por defecto
  */
 export const createDefaultAdmin = async () => {
-    try {
-        const adminExists = await User.findOne({ UserEmail: 'admin@kinal.edu.gt' });
-        if (adminExists) return;
+  try {
+    const adminExists = await User.findOne({ UserEmail: 'admin@kinal.edu.gt' });
+    if (adminExists) return;
 
-        const admin = new User({
-            UserName: 'ADMINB',
-            UserSurname: 'SYSTEM',
-            UserDPI: '0000000000000',
-            UserEmail: 'admin@kinal.edu.gt',
-            UserPassword: 'ADMINB',
-            UserRol: 'ADMIN',
-            UserAddress: 'Ciudad',
-            UserPhone: '00000000',
-            UserJob: 'Admin',
-            UserIncome: 0,
-            UserStatus: 'ACTIVE',
-            isVerified: true 
-        });
+    const admin = new User({
+      UserName: 'ADMINB',
+      UserSurname: 'SYSTEM',
+      UserDPI: '0000000000000',
+      UserEmail: 'admin@kinal.edu.gt',
+      UserPassword: 'ADMINB',
+      UserRol: 'ADMIN',
+      UserAddress: 'Ciudad',
+      UserPhone: '00000000',
+      UserJob: 'Admin',
+      UserIncome: 0,
+      UserStatus: 'ACTIVE',
+      isVerified: true
+    });
 
-        await admin.save();
-        console.log('Admin ADMINB creado correctamente');
-    } catch (err) {
-        console.error('Error al crear admin:', err.message);
-    }
+    await admin.save();
+    console.log('Admin ADMINB creado correctamente');
+  } catch (err) {
+    console.error('Error al crear admin:', err.message);
+  }
 };
 
 /**
  * Cambiar rol del usuario
  */
 export const changeUserRole = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { UserRol } = req.body;
+  try {
+    const { id } = req.params;
+    const { UserRol } = req.body;
 
-        if (!['USER', 'ADMIN'].includes(UserRol)) {
-            return res.status(400).json({ success: false, message: 'Rol inválido' });
-        }
-
-        const user = await User.findByIdAndUpdate(id, { UserRol }, { new: true });
-        if (!user) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
-
-        res.status(200).json({ success: true, message: `Rol actualizado a ${UserRol}`, data: user });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+    if (!['USER', 'ADMIN'].includes(UserRol)) {
+      return res.status(400).json({ success: false, message: 'Rol inválido' });
     }
+
+    const user = await User.findByIdAndUpdate(id, { UserRol }, { new: true });
+    if (!user) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+
+    res.status(200).json({ success: true, message: `Rol actualizado a ${UserRol}`, data: user });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 };
