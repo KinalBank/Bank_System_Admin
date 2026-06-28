@@ -30,6 +30,10 @@ import extraFinancingDetailRoutes from '../src/ExtraFinancingDetail/extraFinanci
 import extraFinancingPaymentRoutes from '../src/ExtraFinancingPayment/extraFinancingPayment.routes.js';
 import loanDetailRoutes from '../src/LoanDetail/loanDetail.routes.js';
 import productRoutes from '../src/Product/product.routes.js';
+import cardStatusRequestRoutes from '../src/CardStatusRequest/cardStatusRequest.routes.js';
+import cardRequestRoutes from '../src/cardRequest/cardRequest.routes.js';
+import creditCardRequestRoutes from '../src/CreditCardRequest/creditCardRequest.routes.js';
+import extraFinancingRequestRoutes from '../src/ExtraFinancingRequest/extraFinancingRequest.routes.js';
 
 
 const middleware = (app) => {
@@ -64,6 +68,10 @@ const routes = (app) => {
     app.use(`${BASE_URL}/extraFinancingPayments`, extraFinancingPaymentRoutes);
     app.use(`${BASE_URL}/loanDetails`, loanDetailRoutes);
     app.use(`${BASE_URL}/products`, productRoutes);
+    app.use(`${BASE_URL}/cardStatusRequests`, cardStatusRequestRoutes);
+    app.use(`${BASE_URL}/cardRequests`, cardRequestRoutes);
+    app.use(`${BASE_URL}/creditCardRequests`, creditCardRequestRoutes);
+    app.use(`${BASE_URL}/extraFinancingRequests`, extraFinancingRequestRoutes);
 }
 
 
