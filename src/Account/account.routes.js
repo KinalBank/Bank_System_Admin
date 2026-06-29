@@ -1,12 +1,15 @@
 'use strict';
 
 import { Router } from 'express';
-import { 
-    createAccount, 
-    getAccounts, 
-    changeAccountStatus, 
-    getAccountRanking, 
-    getAccountDetails 
+import {
+    createAccount,
+    getAccounts,
+    changeAccountStatus,
+    getAccountRanking,
+    getAccountDetails,
+    getPendingRequests,        
+    approveAccountRequest,    
+    rejectAccountRequest       
 } from './account.controller.js';
 import { validateJWT } from '../../middlewares/validate-jwt.js';
 import { hasRole } from '../../middlewares/role-validator.js';
@@ -27,5 +30,9 @@ router.get('/movements/ranking', [validateJWT, hasRole('ADMIN_ROLE')], getAccoun
 
 // GET - Detalles de cuenta
 router.get('/:id/details', [validateJWT], getAccountDetails);
+
+router.get('/requests', [validateJWT, hasRole('ADMIN_ROLE')], getPendingRequests);
+router.patch('/:id/approve', [validateJWT, hasRole('ADMIN_ROLE')], approveAccountRequest);
+router.patch('/:id/reject', [validateJWT, hasRole('ADMIN_ROLE')], rejectAccountRequest);
 
 export default router;
