@@ -19,13 +19,15 @@ export const getAllCardStatusRequests = async (req, res) => {
         if (cardType) filter.cardType = cardType;
 
         const requests = await CardStatusRequest.find(filter)
-            .populate({
-                path: 'card',
-                select: 'cardNumber brand type isActive isApproved creditLimit availableCredit totalDebt status cutoffDate',
-                populate: { path: 'account', select: 'accountNumber accountType' }
-            })
-            .populate('user', 'UserName UserSurname UserEmail')
-            .populate('processedBy', 'UserName UserSurname')
+            .populate([
+                {
+                    path: 'card',
+                    select: 'cardNumber brand type isActive isApproved creditLimit availableCredit totalDebt status cutoffDate',
+                    populate: { path: 'account', select: 'accountNumber accountType', strictPopulate: false }
+                },
+                { path: 'user', select: 'UserName UserSurname UserEmail' },
+                { path: 'processedBy', select: 'UserName UserSurname' }
+            ])
             .limit(parseInt(limit))
             .skip((parseInt(page) - 1) * parseInt(limit))
             .sort({ createdAt: -1 });
@@ -78,12 +80,12 @@ export const approveCardStatusRequest = async (req, res) => {
         // Aplicar cambio de estado y limpiar flag pendiente
         if (request.cardType === 'CREDIT') {
             await CreditCard.findByIdAndUpdate(card._id, {
-                status:               request.requestedStatus === 'ACTIVATE' ? 'ACTIVE' : 'BLOCKED',
+                status: request.requestedStatus === 'ACTIVATE' ? 'ACTIVE' : 'BLOCKED',
                 pendingStatusRequest: false,
             });
         } else {
             await Card.findByIdAndUpdate(card._id, {
-                isActive:             request.requestedStatus === 'ACTIVATE',
+                isActive: request.requestedStatus === 'ACTIVATE',
                 pendingStatusRequest: false,
             });
         }
@@ -92,7 +94,7 @@ export const approveCardStatusRequest = async (req, res) => {
         const adminUser = await User.findOne({ uid: req.user.id }).select('_id');
 
         await CardStatusRequest.findByIdAndUpdate(request._id, {
-            status:      'APPROVED',
+            status: 'APPROVED',
             processedBy: adminUser?._id ?? null,
         });
 
@@ -141,9 +143,9 @@ export const rejectCardStatusRequest = async (req, res) => {
         const adminUser = await User.findOne({ uid: req.user.id }).select('_id');
 
         await CardStatusRequest.findByIdAndUpdate(request._id, {
-            status:          'REJECTED',
+            status: 'REJECTED',
             rejectionReason: rejectionReason || null,
-            processedBy:     adminUser?._id ?? null,
+            processedBy: adminUser?._id ?? null,
         });
 
         res.status(200).json({
